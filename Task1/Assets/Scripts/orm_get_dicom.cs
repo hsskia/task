@@ -16,8 +16,7 @@ using System.Resources;
 
 public class dicom_test : MonoBehaviour
 {
-    // DicomStudy 출력 함수
-    void MakeDicomStudy(JObject data){
+    void PrintDicomStudy(JObject data){
         DicomStudy study = data.ToObject<DicomStudy>(); // 받아온 data를 DicomStudy class에 입력 
         string res = "Dicom Study Data \n";
         
@@ -29,8 +28,7 @@ public class dicom_test : MonoBehaviour
         print(res);
     }
 
-    // DicomSeries 출력 함수
-    void MakeDicomSeries(JArray data){
+    void PrintDicomSeries(JArray data){
         int id_val = (int) data[0]["dicomStudyId"];
         string ans1 = $"Dicom Study ID {id_val} Dicom Series Data \n";
 
@@ -69,7 +67,7 @@ public class dicom_test : MonoBehaviour
             JArray dicom_study = JArray.Parse(req_study.downloadHandler.text);
             
             foreach (JObject item in dicom_study) {
-                MakeDicomStudy(item);
+                PrintDicomStudy(item);
                 
                 // Dicom stydy id에 일치하는 series data GET
                 UnityWebRequest req_series = UnityWebRequest.Get("http://10.10.20.173:5080/v2/Dicom/Series?studyId="+ item["id"]);
@@ -82,7 +80,7 @@ public class dicom_test : MonoBehaviour
                 else
                 {
                     JArray dicom_series = JArray.Parse(req_series.downloadHandler.text);
-                    MakeDicomSeries(dicom_series);
+                    PrintDicomSeries(dicom_series);
                 }
             }
         }
