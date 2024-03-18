@@ -14,37 +14,37 @@ using System.Data.Common;
 using Newtonsoft.Json;
 using System.Resources;
 
-public class dicom_test : MonoBehaviour
+public class print_dicom_data : MonoBehaviour
 {
     void PrintDicomStudy(JObject data){
         DicomStudy study = data.ToObject<DicomStudy>(); // 받아온 data를 DicomStudy class에 입력 
-        string res = "Dicom Study Data \n";
+        string result = "Dicom Study Data \n";
         
         // study 클래스의 value들 출력
         foreach (var property in typeof(DicomStudy).GetProperties()){
             object val = property.GetValue(study);
-            res += $"{property.Name}: {val} \n";
+            result += $"{property.Name}: {val} \n";
         }
-        print(res);
+        print(result);
     }
 
     void PrintDicomSeries(JArray data){
         int id_val = (int) data[0]["dicomStudyId"];
-        string ans1 = $"Dicom Study ID {id_val} Dicom Series Data \n";
+        string result = $"Dicom Study ID {id_val} Dicom Series Data \n";
 
         // study id에 일치하는 series 데이터들
         foreach (JObject item in data) {
             DicomSeries series = item.ToObject<DicomSeries>(); // 받아온 data를 DicomStudy class에 입력 
-            string ans2 = "----------------------------------------------------------------------------- \n";
+            string result2 = "----------------------------------------------------------------------------- \n";
             
             // series 데이터 출력
             foreach (var property in typeof(DicomSeries).GetProperties()){
                 object val = property.GetValue(series);
-                ans2 += $"{property.Name}: {val} \n";
+                result2 += $"{property.Name}: {val} \n";
             }
-            ans1 += ans2;
+            result += result2;
         }
-        print(ans1);
+        print(result);
     }
     void Start()
     {
@@ -54,7 +54,9 @@ public class dicom_test : MonoBehaviour
     IEnumerator GetJsonData()
     {
         // http 접근 후 data GET
-        UnityWebRequest req_study = UnityWebRequest.Get("http://10.10.20.173:5080/v2/Dicom/Study");
+        string dicom_url = "http://10.10.20.173:5080/v2/Dicom/";
+
+        UnityWebRequest req_study = UnityWebRequest.Get(dicom_url + "Study");
         yield return req_study.SendWebRequest();
 
         if (req_study.result != UnityWebRequest.Result.Success)
@@ -70,7 +72,7 @@ public class dicom_test : MonoBehaviour
                 PrintDicomStudy(item);
                 
                 // Dicom stydy id에 일치하는 series data GET
-                UnityWebRequest req_series = UnityWebRequest.Get("http://10.10.20.173:5080/v2/Dicom/Series?studyId="+ item["id"]);
+                UnityWebRequest req_series = UnityWebRequest.Get(dicom_url + "Series?studyId="+ item["id"]);
                 yield return req_series.SendWebRequest();
                 
                 if (req_series.result != UnityWebRequest.Result.Success)

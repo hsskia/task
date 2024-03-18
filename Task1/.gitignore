@@ -8,7 +8,14 @@
 **[Bb]uild/
 **[Bb]uilds/
 **[Ll]ogs/
+
+############ 추가 ############
 **[Uu]ser[Ss]ettings/
+**[Pp]roject[Ss]ettings/
+**[Pp]ackages/
+**[Aa]ssets/NuGet/
+**[Aa]ssets/Packages/
+
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
