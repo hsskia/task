@@ -14,6 +14,7 @@ using Unity.IO.LowLevel.Unsafe;
 
 public class dicom_data_search : MonoBehaviour
 {
+    public GameObject study_scrollview;
     public GameObject id_content;
     public GameObject patient_name_content;
     public GameObject study_description_content;
@@ -98,6 +99,10 @@ public class dicom_data_search : MonoBehaviour
                 }
             }
         }
+
+        // study scroll_view 를 초기화해서 화면에 있는 데이터의 길이만큼만 스크롤 표시
+        study_scrollview.SetActive(false);
+        study_scrollview.SetActive(true);    
     }
 
     // Series 데이터 항목 삭제
@@ -117,7 +122,7 @@ public class dicom_data_search : MonoBehaviour
         if(check == true){
             // study data가 활성화되면 series 데이터는 비활성화되어 화면이 겹치는 것 방지
             series_scrollview.SetActive(false);      
-            search_content.SetActive(true);       
+            search_content.SetActive(true);     
         }
         else{     
             series_scrollview.SetActive(true);
@@ -143,6 +148,9 @@ public class dicom_data_search : MonoBehaviour
                 }
             }
         }
+
+        study_scrollview.SetActive(false);
+        study_scrollview.SetActive(true);
         
     }
 
