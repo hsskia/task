@@ -39,7 +39,6 @@ public class dicom_data_search : MonoBehaviour
     public GameObject series_text; // series data 출력용 Text
     public GameObject series_scrollview; // series data 출력용 ScrollView
 
-    /////////////
     public GameObject search_content;
     public GameObject input_field;
     public GameObject search_text;
@@ -75,9 +74,29 @@ public class dicom_data_search : MonoBehaviour
             }
         }
 
-        // keyword 에 해당하는 dicom data 의 id 출력
-        foreach (string item in search_id_list){
-            print(item);
+        Visibility_Dicom_Search_Keyword(search_id_list);
+    }
+
+    void Visibility_Dicom_Search_Keyword(List<string> data){
+        Transform[] child_object = scrollview_content.GetComponentsInChildren<Transform>(true);
+        for (int i = 1; i < child_object.Length; i++){
+            Transform[] child_object2 = child_object[i].GetComponentsInChildren<Transform>(true);
+            for (int j = 1; j < child_object2.Length; j++){
+            
+                string child_name = child_object2[j].name;
+                string child_id = Regex.Replace(child_name, @"[^0-9]", "");
+
+                // keyword 가 포함된 데이터들의 ID 가 포함된 list 에
+                // 해당되는 object 면 활성화, keyword 가 포함 안 되었으면 비활성화
+                if (data.Count == dicom_study.Count){
+                    child_object2[j].gameObject.SetActive(true);
+                }
+                else if (child_name.Contains("Clone") & 
+                (!data.Contains(child_id))) // id가 일치하는 data 외에는 모두 비활성화
+                {
+                    child_object2[j].gameObject.SetActive(false);
+                }
+            }
         }
     }
 

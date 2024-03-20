@@ -451,8 +451,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 514762597}
-        m_TargetAssemblyTypeName: test, Assembly-CSharp
+      - m_Target: {fileID: 514762598}
+        m_TargetAssemblyTypeName: dicom_data_search, Assembly-CSharp
         m_MethodName: on_click_search
         m_Mode: 1
         m_Arguments:
@@ -612,8 +612,7 @@ GameObject:
   - component: {fileID: 514762593}
   - component: {fileID: 514762592}
   - component: {fileID: 514762591}
-  - component: {fileID: 514762596}
-  - component: {fileID: 514762597}
+  - component: {fileID: 514762598}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -706,35 +705,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &514762596
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 514762590}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 378035d5507ed3847b676e6fc65a3f22, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  id_content: {fileID: 1931600004}
-  patient_name_content: {fileID: 1599903532}
-  study_description_content: {fileID: 2003813873}
-  patient_id_content: {fileID: 1736827060}
-  num_series_content: {fileID: 922902632}
-  scrollview_content: {fileID: 856929707}
-  series_content: {fileID: 1498893611}
-  button: {fileID: 877321400}
-  id_row: {fileID: 1739508863}
-  patient_name_row: {fileID: 1718916271}
-  study_description_row: {fileID: 1873018307}
-  patient_id_row: {fileID: 305092389}
-  num_series_row: {fileID: 1525449805}
-  study_id: 
-  series_text: {fileID: 502153538}
-  series_scrollview: {fileID: 1401663192}
---- !u!114 &514762597
+--- !u!114 &514762598
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -894,7 +865,7 @@ GameObject:
   - component: {fileID: 856929710}
   - component: {fileID: 856929711}
   m_Layer: 5
-  m_Name: Content
+  m_Name: ScrollView_Content
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -994,9 +965,9 @@ RectTransform:
   - {fileID: 1739508864}
   m_Father: {fileID: 1426277292}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 50, y: -29.991}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 59.982}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &877321402
