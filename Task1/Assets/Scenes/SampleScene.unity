@@ -394,7 +394,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 514762590}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 70717de82e111ad48a575dc156bea4cb, type: 3}
+  m_Script: {fileID: 11500000, guid: 378035d5507ed3847b676e6fc65a3f22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   id_content: {fileID: 1931600004}
@@ -402,6 +402,8 @@ MonoBehaviour:
   study_description_content: {fileID: 2003813873}
   patient_id_content: {fileID: 1736827060}
   num_series_content: {fileID: 922902632}
+  scrollview_content: {fileID: 856929707}
+  series_content: {fileID: 1498893611}
   button: {fileID: 877321400}
   id_row: {fileID: 1739508863}
   patient_name_row: {fileID: 1718916271}
@@ -409,8 +411,6 @@ MonoBehaviour:
   patient_id_row: {fileID: 305092389}
   num_series_row: {fileID: 1525449805}
   study_id: 
-  scrollview_content: {fileID: 856929707}
-  series_content: {fileID: 1498893611}
   series_text: {fileID: 502153538}
   series_scrollview: {fileID: 1401663192}
 --- !u!1 &705507993
@@ -673,7 +673,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 514762595}
-        m_TargetAssemblyTypeName: test, Assembly-CSharp
+        m_TargetAssemblyTypeName: dicom_tableview, Assembly-CSharp
         m_MethodName: on_click
         m_Mode: 1
         m_Arguments:
