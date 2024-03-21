@@ -1338,7 +1338,7 @@ GameObject:
   - component: {fileID: 1322545000}
   - component: {fileID: 1322544999}
   m_Layer: 5
-  m_Name: Scroll View
+  m_Name: Study_ScrollView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1381,7 +1381,7 @@ MonoBehaviour:
   m_Content: {fileID: 856929708}
   m_Horizontal: 1
   m_Vertical: 1
-  m_MovementType: 1
+  m_MovementType: 2
   m_Elasticity: 0.1
   m_Inertia: 1
   m_DecelerationRate: 0.135
@@ -2378,7 +2378,6 @@ GameObject:
   - component: {fileID: 1873018310}
   - component: {fileID: 1873018309}
   m_Layer: 5
-  m_Name: desText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2391,17 +2390,14 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1873018307}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1426277292}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 300, y: 59.982}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1873018309
 MonoBehaviour:
@@ -2445,6 +2441,10 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1873018307}
   m_CullTransparentMesh: 1
+  m_Name: desText
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_Father: {fileID: 1426277292}
+  m_SizeDelta: {x: 300, y: 59.982}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
