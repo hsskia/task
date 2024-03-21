@@ -13,6 +13,7 @@ using UnityEditor;
 
 public class dicom_tableview : MonoBehaviour
 {
+    public GameObject study_scrollview;    
     public GameObject id_content;
     public GameObject patient_name_content;
     public GameObject study_description_content;
@@ -94,6 +95,10 @@ public class dicom_tableview : MonoBehaviour
                 }
             }
         }
+
+        // 스크롤뷰 초기화 -> 데이터의 크기만큼 화면이 출력되도록
+        study_scrollview.SetActive(false);
+        study_scrollview.SetActive(true);
         
     }
 
@@ -159,6 +164,9 @@ public class dicom_tableview : MonoBehaviour
             study_description.name = study_description.name + study.id.ToString();
             patient_id_elements.name = patient_id_elements.name + study.id.ToString();
             num_seriese_elements.name = num_seriese_elements.name + study.id.ToString();
+
+            study_scrollview.SetActive(false);
+            study_scrollview.SetActive(true);
         }
     }
 
