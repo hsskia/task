@@ -14,7 +14,9 @@ using Unity.IO.LowLevel.Unsafe;
 
 public class dicom_data_search : MonoBehaviour
 {
-    public GameObject study_scrollview;
+    public ScrollRect study_scrollview;
+    public ScrollRect series_scrollview; // series data 출력용 ScrollView
+
     public GameObject id_content;
     public GameObject patient_name_content;
     public GameObject study_description_content;
@@ -24,26 +26,24 @@ public class dicom_data_search : MonoBehaviour
     public GameObject series_content;
     
     // series 연동 버튼
-    public GameObject series_button;
+    public Button button;
 
     // table data row
-    public GameObject id_row;
-    public GameObject patient_name_row;
-    public GameObject study_description_row;
-    public GameObject patient_id_row;
-    public GameObject num_series_row;
+    public Text id_row;
+    public Text patient_name_row;
+    public Text study_description_row;
+    public Text patient_id_row;
+    public Text num_series_row;
+    public Text series_text; // series data 출력용 Text
 
     string dicom_url = "http://10.10.20.173:5080/v2/Dicom/";
     public string study_id;
     public JArray dicom_study;
 
-    public GameObject series_text; // series data 출력용 Text
-    public GameObject series_scrollview; // series data 출력용 ScrollView
-
     public GameObject search_content;
-    public GameObject input_field;
-    public GameObject search_text;
-    public GameObject search_button;
+    public InputField input_field;
+    public Text search_text;
+    public Button search_button;
     public string keyword;
 
     public void on_click_id()
@@ -64,7 +64,7 @@ public class dicom_data_search : MonoBehaviour
 
     public void on_click_search()
     {
-        keyword = search_text.GetComponent<Text>().text;
+        keyword = search_text.text;
         search_text.transform.SetParent(input_field.transform);
         
         List<string> search_id_list = new List<string>();
@@ -99,10 +99,13 @@ public class dicom_data_search : MonoBehaviour
                 }
             }
         }
+        ResetScrollView();
+    }
 
-        // study scroll_view 를 초기화해서 화면에 있는 데이터의 길이만큼만 스크롤 표시
-        study_scrollview.SetActive(false);
-        study_scrollview.SetActive(true);    
+    // 스크롤뷰 초기화 -> 데이터의 크기만큼 화면이 출력되도록
+    void ResetScrollView(){
+        study_scrollview.gameObject.SetActive(false);
+        study_scrollview.gameObject.SetActive(true);
     }
 
     // Series 데이터 항목 삭제
@@ -121,12 +124,12 @@ public class dicom_data_search : MonoBehaviour
     void SetStudyVisibility(bool check){
         if(check == true){
             // study data가 활성화되면 series 데이터는 비활성화되어 화면이 겹치는 것 방지
-            series_scrollview.SetActive(false);      
-            search_content.SetActive(true);     
+            series_scrollview.gameObject.SetActive(false);      
+            search_content.gameObject.SetActive(true);     
         }
         else{     
-            series_scrollview.SetActive(true);
-            series_text.SetActive(true);
+            series_scrollview.gameObject.SetActive(true);
+            series_text.gameObject.SetActive(true);
             search_content.SetActive(false);
         }   
             
@@ -149,9 +152,8 @@ public class dicom_data_search : MonoBehaviour
             }
         }
 
-        study_scrollview.SetActive(false);
-        study_scrollview.SetActive(true);
-        
+        ResetScrollView();
+
     }
 
     void Add_DicomSeries_Rows(JArray data)
@@ -170,53 +172,43 @@ public class dicom_data_search : MonoBehaviour
                 object val = property.GetValue(series);
                 result2 += $"{property.Name}: {val} \n";
             }
-            GameObject series_data = (GameObject)Instantiate(series_text);
-            series_data.transform.SetParent(series_content.transform);
-            series_data.GetComponent<Text>().text = result2;
+            Text series_data = (Text)Instantiate(series_text, series_content.transform);
+            series_data.text = result2;
             
         }
         series_text.transform.SetParent(series_content.transform);
-        series_text.GetComponent<Text>().text = result;
-        series_text.SetActive(false);
+        series_text.text = result;
+        series_text.gameObject.SetActive(false);
     }
 
     void Add_DicomStudy_Rows(JArray data){
         foreach (JObject item in data) {
-            GameObject id = (GameObject)Instantiate(series_button);
-            GameObject patient_name = (GameObject)Instantiate(patient_name_row);
-            GameObject study_description = (GameObject)Instantiate(study_description_row);
-            GameObject patient_id = (GameObject)Instantiate(patient_id_row);
-            GameObject num_series = (GameObject)Instantiate(num_series_row);
+            // Button 생성 및 부모 지정
+            Button id = Instantiate(button, id_content.transform);
             
-            id_row.transform.SetParent(series_button.transform);
-            id.transform.SetParent(id_content.transform);
-            patient_name.transform.SetParent(patient_name_content.transform);
-            study_description.transform.SetParent(study_description_content.transform);
-            patient_id.transform.SetParent(patient_id_content.transform);
-            num_series.transform.SetParent(num_series_content.transform);
+            // Text 요소 생성 및 부모 지정
+            Text patient_name = Instantiate(patient_name_row, patient_name_content.transform);
+            Text study_description = Instantiate(study_description_row, study_description_content.transform);
+            Text patient_id = Instantiate(patient_id_row, patient_id_content.transform);
+            Text num_series = Instantiate(num_series_row, num_series_content.transform);
 
-            Text id_elements = id.GetComponentInChildren<Text>(); // id밑에 복사된 text를 가져와야함.
-            Text patient_name_elements = patient_name.GetComponent<Text>();
-            Text study_description_elements = study_description.GetComponent<Text>();
-            Text patient_id_elements = patient_id.GetComponent<Text>();
-            Text num_seriese_elements = num_series.GetComponent<Text>();
-
+            // Text 요소에 데이터 설정
             DicomStudy study = item.ToObject<DicomStudy>();
-
-            id_elements.text = study.id.ToString();
-            patient_name_elements.text = study.patientName.ToString();
-            study_description_elements.text = study.studyDescription.ToString();
-            patient_id_elements.text = study.patientID.ToString();
-            num_seriese_elements.text = study.numberOfSeries.ToString();
+            id.GetComponentInChildren<Text>().text = study.id.ToString();
+            patient_name.text = study.patientName.ToString();
+            study_description.text = study.studyDescription.ToString();
+            patient_id.text = study.patientID.ToString();
+            num_series.text = study.numberOfSeries.ToString();
 
             // 이름에 id 추가
-            // id_text -> id_text(Clone)18
             id.name = id.name + study.id.ToString();
-            patient_name_elements.name = patient_name_elements.name + study.id.ToString();
+            patient_name.name = patient_name.name + study.id.ToString();
             study_description.name = study_description.name + study.id.ToString();
-            patient_id_elements.name = patient_id_elements.name + study.id.ToString();
-            num_seriese_elements.name = num_seriese_elements.name + study.id.ToString();
+            patient_id.name = patient_id.name + study.id.ToString();
+            num_series.name = num_series.name + study.id.ToString();
+
         }
+        ResetScrollView();
     }
 
     void Start(){
