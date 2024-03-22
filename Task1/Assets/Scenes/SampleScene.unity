@@ -583,7 +583,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 378035d5507ed3847b676e6fc65a3f22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  study_scrollview: {fileID: 1322544997}
+  study_scrollview: {fileID: 1322544999}
   id_content: {fileID: 1931600004}
   patient_name_content: {fileID: 1599903532}
   study_description_content: {fileID: 2003813873}
@@ -591,15 +591,15 @@ MonoBehaviour:
   num_series_content: {fileID: 922902632}
   scrollview_content: {fileID: 856929707}
   series_content: {fileID: 1498893611}
-  button: {fileID: 877321400}
-  id_row: {fileID: 1739508863}
-  patient_name_row: {fileID: 1718916271}
-  study_description_row: {fileID: 1873018307}
-  patient_id_row: {fileID: 305092389}
-  num_series_row: {fileID: 1525449805}
+  button: {fileID: 877321402}
+  id_row: {fileID: 1739508865}
+  patient_name_row: {fileID: 1718916273}
+  study_description_row: {fileID: 1873018309}
+  patient_id_row: {fileID: 305092391}
+  num_series_row: {fileID: 1525449807}
   study_id: 
-  series_text: {fileID: 502153538}
-  series_scrollview: {fileID: 1401663192}
+  series_text: {fileID: 502153540}
+  series_scrollview: {fileID: 1401663194}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -825,7 +825,7 @@ GameObject:
   - component: {fileID: 877321403}
   - component: {fileID: 877321402}
   m_Layer: 5
-  m_Name: Series_Button
+  m_Name: ID_Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1501,7 +1501,7 @@ GameObject:
   - component: {fileID: 1498893614}
   - component: {fileID: 1498893613}
   m_Layer: 5
-  m_Name: TextContent
+  m_Name: SeriesContent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2109,7 +2109,7 @@ GameObject:
   - component: {fileID: 1739508866}
   - component: {fileID: 1739508865}
   m_Layer: 5
-  m_Name: button_text
+  m_Name: id_text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2393,7 +2393,7 @@ GameObject:
   - component: {fileID: 1931600007}
   - component: {fileID: 1931600006}
   m_Layer: 5
-  m_Name: Button_Content
+  m_Name: ID_Content
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
