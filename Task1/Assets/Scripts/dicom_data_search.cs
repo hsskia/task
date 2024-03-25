@@ -17,23 +17,12 @@ public class dicom_data_search : MonoBehaviour
     public ScrollRect study_scrollview;
     public ScrollRect series_scrollview; // series data 출력용 ScrollView
 
-    public GameObject id_content;
-    public GameObject patient_name_content;
-    public GameObject study_description_content;
-    public GameObject patient_id_content;
-    public GameObject num_series_content;
     public GameObject scrollview_content;
     public GameObject series_content;
+    public GameObject row_content;
     
     // series 연동 버튼
     public Button button;
-
-    // table data row
-    public Text id_row;
-    public Text patient_name_row;
-    public Text study_description_row;
-    public Text patient_id_row;
-    public Text num_series_row;
     public Text series_text; // series data 출력용 Text
 
     string dicom_url = "http://10.10.20.173:5080/v2/Dicom/";
@@ -57,6 +46,7 @@ public class dicom_data_search : MonoBehaviour
             RemoveSeriesObject();
         }
         else{
+            RemoveSeriesObject();
             StartCoroutine(GetSeriesData());
             SetStudyVisibility(false);
         }
@@ -81,24 +71,21 @@ public class dicom_data_search : MonoBehaviour
     void Visibility_Dicom_Search_Keyword(List<string> data){
         Transform[] child_object = scrollview_content.GetComponentsInChildren<Transform>(true);
         for (int i = 1; i < child_object.Length; i++){
-            Transform[] child_object2 = child_object[i].GetComponentsInChildren<Transform>(true);
-            for (int j = 1; j < child_object2.Length; j++){
-            
-                string child_name = child_object2[j].name;
-                string child_id = Regex.Replace(child_name, @"[^0-9]", "");
+            string child_name = child_object[i].name;
+            string child_id = Regex.Replace(child_name, @"[^0-9]", "");
 
-                // keyword 가 포함된 데이터들의 ID 가 포함된 list 에
-                // 해당되는 object 면 활성화, keyword 가 포함 안 되었으면 비활성화
-                if (data.Count == dicom_study.Count){
-                    child_object2[j].gameObject.SetActive(true);
-                }
-                else if (child_name.Contains("Clone") & 
-                (!data.Contains(child_id))) // id가 일치하는 data 외에는 모두 비활성화
-                {
-                    child_object2[j].gameObject.SetActive(false);
-                }
+            // keyword 가 포함된 데이터들의 ID 가 포함된 list 에
+            // 해당되는 object 면 활성화, keyword 가 포함 안 되었으면 비활성화
+            if (data.Count == dicom_study.Count){
+                child_object[i].gameObject.SetActive(true);
+            }
+            else if (child_name.Contains("Clone") & 
+            (!data.Contains(child_id))) // id가 일치하는 data 외에는 모두 비활성화
+            {
+                child_object[i].gameObject.SetActive(false);
             }
         }
+
         ResetScrollView();
     }
 
@@ -131,23 +118,20 @@ public class dicom_data_search : MonoBehaviour
             series_scrollview.gameObject.SetActive(true);
             series_text.gameObject.SetActive(true);
             search_content.SetActive(false);
-        }   
+        }    
             
         Transform[] child_object = scrollview_content.GetComponentsInChildren<Transform>(true);
         for (int i = 1; i < child_object.Length; i++){
-            Transform[] child_object2 = child_object[i].GetComponentsInChildren<Transform>(true);
-            for (int j = 1; j < child_object2.Length; j++){
-                if(check == true){
-                    child_object2[j].gameObject.SetActive(true);
-                }
-                else{
-                    string child_name = child_object2[j].name;
-                    string child_id = Regex.Replace(child_name, @"[^0-9]", "");
-                    if (child_name.Contains("Clone") & 
-                    (child_id != study_id)) // id가 일치하는 data 외에는 모두 비활성화
-                    {
-                        child_object2[j].gameObject.SetActive(false);
-                    }
+            if(check == true){
+                child_object[i].gameObject.SetActive(true);
+            }
+            else{
+                string child_name = child_object[i].name;
+                string child_id = Regex.Replace(child_name, @"[^0-9]", "");
+                if (child_name.Contains("Clone") & 
+                (child_id != study_id)) // id가 일치하는 data 외에는 모두 비활성화
+                {
+                    child_object[i].gameObject.SetActive(false);
                 }
             }
         }
@@ -183,29 +167,24 @@ public class dicom_data_search : MonoBehaviour
 
     void Add_DicomStudy_Rows(JArray data){
         foreach (JObject item in data) {
-            // Button 생성 및 부모 지정
-            Button id = Instantiate(button, id_content.transform);
-            
-            // Text 요소 생성 및 부모 지정
-            Text patient_name = Instantiate(patient_name_row, patient_name_content.transform);
-            Text study_description = Instantiate(study_description_row, study_description_content.transform);
-            Text patient_id = Instantiate(patient_id_row, patient_id_content.transform);
-            Text num_series = Instantiate(num_series_row, num_series_content.transform);
+            GameObject new_row = (GameObject) Instantiate(row_content, scrollview_content.transform);
 
             // Text 요소에 데이터 설정
             DicomStudy study = item.ToObject<DicomStudy>();
-            id.GetComponentInChildren<Text>().text = study.id.ToString();
-            patient_name.text = study.patientName.ToString();
-            study_description.text = study.studyDescription.ToString();
-            patient_id.text = study.patientID.ToString();
-            num_series.text = study.numberOfSeries.ToString();
+            Text id_row = new_row.transform.Find("ID_Button").GetComponentInChildren<Text>();
+            Text patient_name_row = new_row.transform.Find("name_text").GetComponent<Text>();
+            Text description_row = new_row.transform.Find("des_text").GetComponent<Text>();
+            Text patient_id_row = new_row.transform.Find("pid_text").GetComponent<Text>();
+            Text num_series_row = new_row.transform.Find("num_series_text").GetComponent<Text>();
+            
+            id_row.text = study.id.ToString();
+            patient_name_row.text = study.patientName.ToString();
+            description_row.text = study.studyDescription.ToString();
+            patient_id_row.text = study.patientID.ToString();
+            num_series_row.text = study.numberOfSeries.ToString();
 
             // 이름에 id 추가
-            id.name = id.name + study.id.ToString();
-            patient_name.name = patient_name.name + study.id.ToString();
-            study_description.name = study_description.name + study.id.ToString();
-            patient_id.name = patient_id.name + study.id.ToString();
-            num_series.name = num_series.name + study.id.ToString();
+            new_row.name = new_row.name + study.id.ToString();
 
         }
         ResetScrollView();
