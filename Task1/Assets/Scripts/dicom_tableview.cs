@@ -97,25 +97,22 @@ public class dicom_tableview : MonoBehaviour
     void Add_DicomSeries_Rows(JArray data)
     {
         series_content.SetActive(true);
-        int id_val = (int) data[0]["dicomStudyId"];
-        string result = $"Dicom Study ID {id_val} Dicom Series Data";
 
         // study id에 일치하는 series 데이터들
         foreach (JObject item in data) {
             DicomSeries series = item.ToObject<DicomSeries>(); // 받아온 data를 DicomStudy class에 입력 
-            string result2 = "-------------------------------------------------------------------------------------------- \n";
+            string series_value = "-------------------------------------------------------------------------------------------- \n";
             
             // series 데이터 출력
             foreach (var property in typeof(DicomSeries).GetProperties()){
                 object val = property.GetValue(series);
-                result2 += $"{property.Name}: {val} \n";
+                series_value += $"{property.Name}: {val} \n";
             }
             Text series_data = (Text)Instantiate(series_text, series_content.transform);
-            series_data.text = result2;
+            series_data.text = series_value;
             
         }
         series_text.transform.SetParent(series_content.transform);
-        series_text.text = result;
         series_text.gameObject.SetActive(false);
     }
 
