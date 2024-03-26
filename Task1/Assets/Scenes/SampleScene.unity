@@ -589,7 +589,6 @@ MonoBehaviour:
   rowContent: {fileID: 1426277291}
   seriesContent: {fileID: 1498893611}
   seriesText: {fileID: 502153540}
-  studyId: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
