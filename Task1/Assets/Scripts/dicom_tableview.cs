@@ -11,20 +11,18 @@ using JetBrains.Annotations;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using Unity.VisualScripting;
+using study_row;
 
 public class dicom_tableview : MonoBehaviour
 {
     public ScrollRect study_scrollview;
-    public ScrollRect series_scrollview; // series data 출력용 ScrollView
+    public ScrollRect series_scrollview;
 
     public GameObject scrollview_content;
-    public GameObject series_content;
     public GameObject row_content;
-    
-    // series 연동 버튼
-    public Button button;
+    public GameObject series_content;
 
-    public Text series_text; // series data 출력용 Text
+    public Text series_text;
 
     string dicom_url = "http://10.10.20.173:5080/v2/Dicom/";
     public string study_id;
@@ -52,7 +50,6 @@ public class dicom_tableview : MonoBehaviour
         study_scrollview.gameObject.SetActive(true);
     }
 
-    // Series 데이터 항목 삭제
     void RemoveSeriesObject(){
         Transform[] child_object = series_content.GetComponentsInChildren<Transform>(true);
         for (int i = 1; i < child_object.Length; i++){
@@ -64,7 +61,6 @@ public class dicom_tableview : MonoBehaviour
         }
     }
 
-    // Study data 활성화
     void SetStudyVisibility(bool check){
         if(check == true){
             // study data가 활성화되면 series 데이터는 비활성화되어 화면이 겹치는 것 방지
@@ -100,7 +96,7 @@ public class dicom_tableview : MonoBehaviour
 
         // study id에 일치하는 series 데이터들
         foreach (JObject item in data) {
-            DicomSeries series = item.ToObject<DicomSeries>(); // 받아온 data를 DicomStudy class에 입력 
+            DicomSeries series = item.ToObject<DicomSeries>();
             string series_value = "-------------------------------------------------------------------------------------------- \n";
             
             // series 데이터 출력
@@ -112,31 +108,16 @@ public class dicom_tableview : MonoBehaviour
             series_data.text = series_value;
             
         }
-        series_text.transform.SetParent(series_content.transform);
         series_text.gameObject.SetActive(false);
     }
 
     void Add_DicomStudy_Rows(JArray data){
         foreach (JObject item in data) {
-            GameObject new_row = (GameObject) Instantiate(row_content, scrollview_content.transform);
-
-            // Text 요소에 데이터 설정
+            GameObject new_row = Instantiate(row_content, scrollview_content.transform);
+            Dicom_Study_Row dicom_study_row = new_row.GetComponent<Dicom_Study_Row>();
             DicomStudy study = item.ToObject<DicomStudy>();
-            Text id_row = new_row.transform.Find("ID_Button").GetComponentInChildren<Text>();
-            Text patient_name_row = new_row.transform.Find("name_text").GetComponent<Text>();
-            Text description_row = new_row.transform.Find("des_text").GetComponent<Text>();
-            Text patient_id_row = new_row.transform.Find("pid_text").GetComponent<Text>();
-            Text num_series_row = new_row.transform.Find("num_series_text").GetComponent<Text>();
-            
-            id_row.text = study.id.ToString();
-            patient_name_row.text = study.patientName.ToString();
-            description_row.text = study.studyDescription.ToString();
-            patient_id_row.text = study.patientID.ToString();
-            num_series_row.text = study.numberOfSeries.ToString();
-
-            // 이름에 id 추가
+            dicom_study_row.SetStudyData(study);
             new_row.name = new_row.name + study.id.ToString();
-
         }
         ResetScrollView();
     }
@@ -147,7 +128,6 @@ public class dicom_tableview : MonoBehaviour
 
     IEnumerator GetStudyData()
     {
-        // http 접근 후 data GET
         UnityWebRequest req_study = UnityWebRequest.Get(dicom_url + "Study");
         yield return req_study.SendWebRequest();
 
@@ -178,5 +158,5 @@ public class dicom_tableview : MonoBehaviour
             Add_DicomSeries_Rows(dicom_series);
         }
     }
-    
+
 }

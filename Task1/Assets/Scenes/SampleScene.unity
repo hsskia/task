@@ -422,8 +422,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 197.02805, y: -127.81495}
-  m_SizeDelta: {x: 374.0561, y: 255.6299}
+  m_AnchoredPosition: {x: 201.08136, y: -185.23709}
+  m_SizeDelta: {x: 382.1627, y: 370.4742}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &502153540
 MonoBehaviour:
@@ -586,9 +586,8 @@ MonoBehaviour:
   study_scrollview: {fileID: 1322544999}
   series_scrollview: {fileID: 1401663194}
   scrollview_content: {fileID: 856929707}
-  series_content: {fileID: 1498893611}
   row_content: {fileID: 1426277291}
-  button: {fileID: 877321402}
+  series_content: {fileID: 1498893611}
   series_text: {fileID: 502153540}
   study_id: 
 --- !u!1 &705507993
@@ -756,7 +755,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.000046158453, y: 0.000038146973}
+  m_AnchoredPosition: {x: 0.000015258789, y: 0.000030517578}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &856929710
@@ -1409,6 +1408,7 @@ GameObject:
   - component: {fileID: 1426277292}
   - component: {fileID: 1426277294}
   - component: {fileID: 1426277293}
+  - component: {fileID: 1426277295}
   m_Layer: 5
   m_Name: Row_Content
   m_TagString: Untagged
@@ -1480,6 +1480,23 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &1426277295
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1426277291}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7b79fceb6cb48458953211db82da46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  id_text: {fileID: 1739508865}
+  name_text: {fileID: 1718916273}
+  description_text: {fileID: 1873018309}
+  patient_id_text: {fileID: 305092391}
+  num_series_text: {fileID: 1525449807}
 --- !u!1 &1498893611
 GameObject:
   m_ObjectHideFlags: 0
