@@ -321,7 +321,7 @@ GameObject:
   - component: {fileID: 305092392}
   - component: {fileID: 305092391}
   m_Layer: 5
-  m_Name: pid_text
+  m_Name: pidText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -400,7 +400,7 @@ GameObject:
   - component: {fileID: 502153541}
   - component: {fileID: 502153540}
   m_Layer: 5
-  m_Name: series_text
+  m_Name: seriesText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -583,13 +583,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 378035d5507ed3847b676e6fc65a3f22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  study_scrollview: {fileID: 1322544999}
-  series_scrollview: {fileID: 1401663194}
-  scrollview_content: {fileID: 856929707}
-  row_content: {fileID: 1426277291}
-  series_content: {fileID: 1498893611}
-  series_text: {fileID: 502153540}
-  study_id: 
+  studyScrollview: {fileID: 1322544999}
+  seriesScrollview: {fileID: 1401663194}
+  scrollviewContent: {fileID: 856929707}
+  rowContent: {fileID: 1426277291}
+  seriesContent: {fileID: 1498893611}
+  seriesText: {fileID: 502153540}
+  studyId: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -811,7 +811,7 @@ GameObject:
   - component: {fileID: 877321403}
   - component: {fileID: 877321402}
   m_Layer: 5
-  m_Name: ID_Button
+  m_Name: idButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -882,8 +882,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 514762595}
-        m_TargetAssemblyTypeName: dicom_tableview, Assembly-CSharp
-        m_MethodName: on_click
+        m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
+        m_MethodName: OnClick
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1410,7 +1410,7 @@ GameObject:
   - component: {fileID: 1426277293}
   - component: {fileID: 1426277295}
   m_Layer: 5
-  m_Name: Row_Content
+  m_Name: RowContent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1492,11 +1492,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f7b79fceb6cb48458953211db82da46, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  id_text: {fileID: 1739508865}
-  name_text: {fileID: 1718916273}
-  description_text: {fileID: 1873018309}
-  patient_id_text: {fileID: 305092391}
-  num_series_text: {fileID: 1525449807}
+  idText: {fileID: 1739508865}
+  nameText: {fileID: 1718916273}
+  descriptionText: {fileID: 1873018309}
+  patientIdText: {fileID: 305092391}
+  numSeriesText: {fileID: 1525449807}
 --- !u!1 &1498893611
 GameObject:
   m_ObjectHideFlags: 0
@@ -1588,7 +1588,7 @@ GameObject:
   - component: {fileID: 1506698530}
   - component: {fileID: 1506698529}
   m_Layer: 5
-  m_Name: Scrollbar_Horizontal
+  m_Name: ScrollbarHorizontal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1803,7 +1803,7 @@ GameObject:
   - component: {fileID: 1525449808}
   - component: {fileID: 1525449807}
   m_Layer: 5
-  m_Name: num_series_text
+  m_Name: numSeriesText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1882,7 +1882,7 @@ GameObject:
   - component: {fileID: 1718916274}
   - component: {fileID: 1718916273}
   m_Layer: 5
-  m_Name: name_text
+  m_Name: nameText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1961,7 +1961,7 @@ GameObject:
   - component: {fileID: 1739508866}
   - component: {fileID: 1739508865}
   m_Layer: 5
-  m_Name: id_text
+  m_Name: idText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2041,7 +2041,7 @@ GameObject:
   - component: {fileID: 1834818154}
   - component: {fileID: 1834818153}
   m_Layer: 5
-  m_Name: Scrollbar_Vertical
+  m_Name: ScrollbarVertical
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2166,7 +2166,7 @@ GameObject:
   - component: {fileID: 1873018310}
   - component: {fileID: 1873018309}
   m_Layer: 5
-  m_Name: des_text
+  m_Name: desText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

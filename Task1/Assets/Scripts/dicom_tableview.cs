@@ -11,29 +11,29 @@ using JetBrains.Annotations;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using Unity.VisualScripting;
-using study_row;
+using StudyRow;
 
-public class dicom_tableview : MonoBehaviour
+public class DicomTableview : MonoBehaviour
 {
-    public ScrollRect study_scrollview;
-    public ScrollRect series_scrollview;
+    public ScrollRect studyScrollview;
+    public ScrollRect seriesScrollview;
 
-    public GameObject scrollview_content;
-    public GameObject row_content;
-    public GameObject series_content;
+    public GameObject scrollviewContent;
+    public GameObject rowContent;
+    public GameObject seriesContent;
 
-    public Text series_text;
+    public Text seriesText;
 
-    string dicom_url = "http://10.10.20.173:5080/v2/Dicom/";
-    public string study_id;
+    string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
+    public string studyId;
 
-    public void on_click()
+    public void OnClick()
     {
         GameObject btn = EventSystem.current.currentSelectedGameObject;
-        study_id = btn.GetComponentInChildren<Text>().text;
+        studyId = btn.GetComponentInChildren<Text>().text;
 
         // ID 버튼을 클릭했을 때 처음으로 원상복구 되도록
-        if (study_id == "ID"){ 
+        if (studyId == "ID"){ 
             SetStudyVisibility(true);
             RemoveSeriesObject();
         }
@@ -45,18 +45,18 @@ public class dicom_tableview : MonoBehaviour
     }
 
     // 스크롤뷰 초기화 -> 데이터의 크기만큼 화면이 출력되도록
-    void ResetScrollView(){
-        study_scrollview.gameObject.SetActive(false);
-        study_scrollview.gameObject.SetActive(true);
+    void ResetScrollview(){
+        studyScrollview.gameObject.SetActive(false);
+        studyScrollview.gameObject.SetActive(true);
     }
 
     void RemoveSeriesObject(){
-        Transform[] child_object = series_content.GetComponentsInChildren<Transform>(true);
-        for (int i = 1; i < child_object.Length; i++){
+        Transform[] childObject = seriesContent.GetComponentsInChildren<Transform>(true);
+        for (int i = 1; i < childObject.Length; i++){
 
             // 원본 제외 복사한 항목 모두 삭제
-            if(child_object[i].name.Contains("Clone")){
-                Destroy(child_object[i].gameObject);
+            if(childObject[i].name.Contains("Clone")){
+                Destroy(childObject[i].gameObject);
             }
         }
     }
@@ -64,62 +64,62 @@ public class dicom_tableview : MonoBehaviour
     void SetStudyVisibility(bool check){
         if(check == true){
             // study data가 활성화되면 series 데이터는 비활성화되어 화면이 겹치는 것 방지
-            series_scrollview.gameObject.SetActive(false);             
+            seriesScrollview.gameObject.SetActive(false);             
         }
         else{     
-            series_scrollview.gameObject.SetActive(true);
-            series_text.gameObject.SetActive(true);
+            seriesScrollview.gameObject.SetActive(true);
+            seriesText.gameObject.SetActive(true);
         }   
             
-        Transform[] child_object = scrollview_content.GetComponentsInChildren<Transform>(true);
-        for (int i = 1; i < child_object.Length; i++){
+        Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
+        for (int i = 1; i < childObject.Length; i++){
             if(check == true){
-                child_object[i].gameObject.SetActive(true);
+                childObject[i].gameObject.SetActive(true);
             }
             else{
-                string child_name = child_object[i].name;
-                string child_id = Regex.Replace(child_name, @"[^0-9]", "");
-                if (child_name.Contains("Clone") & 
-                (child_id != study_id)) // id가 일치하는 data 외에는 모두 비활성화
+                string childName = childObject[i].name;
+                string childId = Regex.Replace(childName, @"[^0-9]", "");
+                if (childName.Contains("Clone") & 
+                (childId != studyId)) // id가 일치하는 data 외에는 모두 비활성화
                 {
-                    child_object[i].gameObject.SetActive(false);
+                    childObject[i].gameObject.SetActive(false);
                 }
             }
         }
 
-        ResetScrollView();        
+        ResetScrollview();        
     }
 
-    void Add_DicomSeries_Rows(JArray data)
+    void AddDicomSeriesRows(JArray dicomSeries)
     {
-        series_content.SetActive(true);
+        seriesContent.SetActive(true);
 
         // study id에 일치하는 series 데이터들
-        foreach (JObject item in data) {
+        foreach (JObject item in dicomSeries) {
             DicomSeries series = item.ToObject<DicomSeries>();
-            string series_value = "-------------------------------------------------------------------------------------------- \n";
+            string seriesValue = "-------------------------------------------------------------------------------------------- \n";
             
             // series 데이터 출력
             foreach (var property in typeof(DicomSeries).GetProperties()){
                 object val = property.GetValue(series);
-                series_value += $"{property.Name}: {val} \n";
+                seriesValue += $"{property.Name}: {val} \n";
             }
-            Text series_data = (Text)Instantiate(series_text, series_content.transform);
-            series_data.text = series_value;
+            Text seriesData = (Text)Instantiate(seriesText, seriesContent.transform);
+            seriesData.text = seriesValue;
             
         }
-        series_text.gameObject.SetActive(false);
+        seriesText.gameObject.SetActive(false);
     }
 
-    void Add_DicomStudy_Rows(JArray data){
-        foreach (JObject item in data) {
-            GameObject new_row = Instantiate(row_content, scrollview_content.transform);
-            Dicom_Study_Row dicom_study_row = new_row.GetComponent<Dicom_Study_Row>();
+    void AddDicomStudyRows(JArray dicomStudy){
+        foreach (JObject item in dicomStudy) {
+            GameObject newRow = Instantiate(rowContent, scrollviewContent.transform);
+            DicomStudyRow dicomStudyRow = newRow.GetComponent<DicomStudyRow>();
             DicomStudy study = item.ToObject<DicomStudy>();
-            dicom_study_row.SetStudyData(study);
-            new_row.name = new_row.name + study.id.ToString();
+            dicomStudyRow.SetStudyData(study);
+            newRow.name = newRow.name + study.id.ToString();
         }
-        ResetScrollView();
+        ResetScrollview();
     }
 
     void Start(){
@@ -128,34 +128,34 @@ public class dicom_tableview : MonoBehaviour
 
     IEnumerator GetStudyData()
     {
-        UnityWebRequest req_study = UnityWebRequest.Get(dicom_url + "Study");
-        yield return req_study.SendWebRequest();
+        UnityWebRequest reqStudy = UnityWebRequest.Get(dicomURL + "Study");
+        yield return reqStudy.SendWebRequest();
 
-        if (req_study.result != UnityWebRequest.Result.Success)
+        if (reqStudy.result != UnityWebRequest.Result.Success)
         {
-            Debug.Log(req_study.error);
+            Debug.Log(reqStudy.error);
         }
         else
         {
-            JArray dicom_study = JArray.Parse(req_study.downloadHandler.text);
-            Add_DicomStudy_Rows(dicom_study);
+            JArray dicomStudy = JArray.Parse(reqStudy.downloadHandler.text);
+            AddDicomStudyRows(dicomStudy);
             
         }
     }
 
     IEnumerator GetSeriesData()
     {
-        UnityWebRequest req_series = UnityWebRequest.Get(dicom_url + "Series?studyId=" + study_id);
-        yield return req_series.SendWebRequest();
+        UnityWebRequest reqSeries = UnityWebRequest.Get(dicomURL + "Series?studyId=" + studyId);
+        yield return reqSeries.SendWebRequest();
 
-        if (req_series.result != UnityWebRequest.Result.Success)
+        if (reqSeries.result != UnityWebRequest.Result.Success)
         {
-            Debug.Log(req_series.error);
+            Debug.Log(reqSeries.error);
         }
         else
         {
-            JArray dicom_series = JArray.Parse(req_series.downloadHandler.text);
-            Add_DicomSeries_Rows(dicom_series);
+            JArray dicomSeries = JArray.Parse(reqSeries.downloadHandler.text);
+            AddDicomSeriesRows(dicomSeries);
         }
     }
 
