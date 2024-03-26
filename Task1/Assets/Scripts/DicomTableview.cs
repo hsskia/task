@@ -72,6 +72,12 @@ public class DicomTableview : MonoBehaviour
         }   
             
         Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
+
+        /* index 0번은 모든 Dicom Study Data Row 를 포함하는 GameObject 이기 때문에 이를 비활성화 시킬 경우
+           Series Data 와 일치하는 Study Data 는 남겨두고자 하는 원래 목적이 사라질 수 있기 때문에
+           index 를 1번 부터 시작하여 Series Data 가 표현하는 studyID 와 일치하는 Study Data Row 는
+           활성화된 상태로 남겨둠.
+        */
         for (int i = 1; i < childObject.Length; i++){
             if(check == true){
                 childObject[i].gameObject.SetActive(true);
