@@ -2,20 +2,22 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
-**[Ll]ibrary/
-**[Tt]emp/
-**[Oo]bj/
-**[Bb]uild/
-**[Bb]uilds/
-**[Ll]ogs/
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
 
 ############ 추가 ############
-**[Uu]ser[Ss]ettings/
-**[Pp]roject[Ss]ettings/
-**[Pp]ackages/
-**[Aa]ssets/NuGet/
-**[Aa]ssets/Packages/
-
+[Uu]ser[Ss]ettings/
+.vscode/
+/[Aa]ssets/[Pp]ackages/
+/[Aa]ssets/[Pp]ackages.meta
+/Assets/NuGet/*
+# Editor 파일은 NuGet 설치 위해 제외
+# Editor 파일 제외하고 모두 삭제
+!/Assets/NuGet/Editor/ 
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
