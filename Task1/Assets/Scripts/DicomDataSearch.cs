@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using Unity.IO.LowLevel.Unsafe;
 using StudyRow;
+using Newtonsoft.Json;
 
 public class DicomDataSearch : MonoBehaviour
 {
@@ -32,7 +33,7 @@ public class DicomDataSearch : MonoBehaviour
 
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
     private string studyId;
-    private JArray dicomStudyData;
+    private List<DicomStudy> dicomStudyList;
 
     public void OnClickId()
     {
@@ -58,11 +59,13 @@ public class DicomDataSearch : MonoBehaviour
         keyword = searchText.text;
         List<string> searchIdList = new List<string>();
 
-        foreach (JObject item in dicomStudyData)
+        foreach (DicomStudy item in dicomStudyList)
         {
-            if (item.ToString().Contains(keyword))
+            // patientID 나 patientName 뿐만 아니라 전체 field 를 기준으로 keyword 찾기
+            string dicomStudyString = JsonConvert.SerializeObject(item);
+            if (dicomStudyString.Contains(keyword))
             {
-                searchIdList.Add(item["id"].ToString());
+                searchIdList.Add(item.id.ToString());
             }
         }
 
@@ -77,9 +80,9 @@ public class DicomDataSearch : MonoBehaviour
             string childName = childObject[i].name;
             string childId = Regex.Replace(childName, @"[^0-9]", "");
 
-            // keyword 가 포함된 데이터들의 ID 가 포함된 list 에
+            // keyword 가 포함된 데이터들의 ID 로 구성된 searchedData 에
             // 해당되는 object 면 활성화, keyword 가 포함 안 되었으면 비활성화
-            if (searchedData.Count == dicomStudyData.Count)
+            if (searchedData.Count == dicomStudyList.Count)
             {
                 childObject[i].gameObject.SetActive(true);
             }
@@ -93,21 +96,20 @@ public class DicomDataSearch : MonoBehaviour
         ResetScrollview();
     }
 
-    // 스크롤뷰 초기화 -> 데이터의 크기만큼 화면이 출력되도록
+    // 데이터의 크기만큼 화면이 출력되도록
     void ResetScrollview()
     {
         studyScrollview.gameObject.SetActive(false);
         studyScrollview.gameObject.SetActive(true);
     }
 
-    // Series 데이터 항목 삭제
     void RemoveSeriesObject()
     {
         Transform[] childObject = seriesContent.GetComponentsInChildren<Transform>(true);
         for (int i = 1; i < childObject.Length; i++)
         {
 
-            // 원본 제외 복사한 항목 모두 삭제
+            // Study data 만 화면에 출력하기 위해 Series data 를 의미하는 Clone 된 Object 들을 제거
             if (childObject[i].name.Contains("Clone"))
             {
                 Destroy(childObject[i].gameObject);
@@ -115,7 +117,6 @@ public class DicomDataSearch : MonoBehaviour
         }
     }
 
-    // Study data 활성화
     void SetStudyVisibility(bool check)
     {
         if (check)
@@ -132,6 +133,12 @@ public class DicomDataSearch : MonoBehaviour
         }
 
         Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
+
+        /* index 0번은 모든 Dicom Study Data Row 를 포함하는 GameObject 이기 때문에 이를 비활성화 시킬 경우
+           Series Data 와 일치하는 Study Data 는 남겨두고자 하는 원래 목적이 사라질 수 있기 때문에
+           index 를 1번 부터 시작하여 Series Data 가 표현하는 studyId 와 일치하는 Study Data Row 만
+           활성화된 상태로 남겨둠.
+        */
         for (int i = 1; i < childObject.Length; i++)
         {
             childObject[i].gameObject.SetActive(true);
@@ -141,7 +148,7 @@ public class DicomDataSearch : MonoBehaviour
             string childId = Regex.Replace(childName, @"[^0-9]", "");
 
             if (childName.Contains("Clone") &
-            (childId != studyId)) // id가 일치하는 data 외에는 모두 비활성화
+            (childId != studyId))
             {
                 childObject[i].gameObject.SetActive(false);
             }
@@ -151,38 +158,26 @@ public class DicomDataSearch : MonoBehaviour
 
     }
 
-    void AddDicomSeriesRows(JArray dicomSeries)
+    void AddDicomSeriesRow(DicomSeries dicomSeries)
     {
-        seriesContent.SetActive(true);
-        inputField.textComponent = searchText;
+        string seriesValue = "-------------------------------------------------------------------------------------------- \n";
 
-        foreach (JObject item in dicomSeries)
+        foreach (var property in typeof(DicomSeries).GetProperties())
         {
-            DicomSeries series = item.ToObject<DicomSeries>();
-            string seriesValue = "-------------------------------------------------------------------------------------------- \n";
-
-            foreach (var property in typeof(DicomSeries).GetProperties())
-            {
-                object val = property.GetValue(series);
-                seriesValue += $"{property.Name}: {val} \n";
-            }
-            Text seriesData = (Text)Instantiate(seriesText, seriesContent.transform);
-            seriesData.text = seriesValue;
-
+            object val = property.GetValue(dicomSeries);
+            seriesValue += $"{property.Name}: {val} \n";
         }
-        seriesText.gameObject.SetActive(false);
+
+        Text seriesData = (Text)Instantiate(seriesText, seriesContent.transform);
+        seriesData.text = seriesValue;
     }
 
-    void AddDicomStudyRows(JArray dicomStudy)
+    void AddDicomStudyRow(DicomStudy dicomStudy)
     {
-        foreach (JObject item in dicomStudy)
-        {
-            GameObject newRow = Instantiate(rowContent, scrollviewContent.transform);
-            DicomStudyRow dicomStudyRow = newRow.GetComponent<DicomStudyRow>();
-            DicomStudy study = item.ToObject<DicomStudy>();
-            dicomStudyRow.SetStudyData(study);
-            newRow.name = newRow.name + study.id.ToString();
-        }
+        GameObject newRow = Instantiate(rowContent, scrollviewContent.transform);
+        DicomStudyRow dicomStudyRow = newRow.GetComponent<DicomStudyRow>();
+        dicomStudyRow.SetStudyData(dicomStudy);
+        newRow.name = newRow.name + dicomStudy.id.ToString();
         ResetScrollview();
     }
 
@@ -193,7 +188,6 @@ public class DicomDataSearch : MonoBehaviour
 
     IEnumerator GetStudyData()
     {
-        // http 접근 후 data GET
         UnityWebRequest reqStudy = UnityWebRequest.Get(dicomURL + "Study");
         yield return reqStudy.SendWebRequest();
 
@@ -203,9 +197,12 @@ public class DicomDataSearch : MonoBehaviour
         }
         else
         {
-            dicomStudyData = JArray.Parse(reqStudy.downloadHandler.text);
-            AddDicomStudyRows(dicomStudyData);
-
+            dicomStudyList = JsonConvert.DeserializeObject<List<DicomStudy>>(reqStudy.downloadHandler.text);
+            inputField.textComponent = searchText;
+            foreach (DicomStudy studyData in dicomStudyList)
+            {
+                AddDicomStudyRow(studyData);
+            }
         }
     }
 
@@ -220,8 +217,13 @@ public class DicomDataSearch : MonoBehaviour
         }
         else
         {
-            JArray dicomSeriesData = JArray.Parse(reqSeries.downloadHandler.text);
-            AddDicomSeriesRows(dicomSeriesData);
+            List<DicomSeries> dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
+            seriesContent.SetActive(true);
+            foreach (DicomSeries seriesData in dicomSeriesList)
+            {
+                AddDicomSeriesRow(seriesData);
+            }
+            seriesText.gameObject.SetActive(false);
         }
     }
 
