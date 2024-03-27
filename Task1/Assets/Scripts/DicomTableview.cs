@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using Unity.VisualScripting;
 using StudyRow;
+using Newtonsoft.Json;
 
 public class DicomTableview : MonoBehaviour
 {
@@ -109,37 +110,26 @@ public class DicomTableview : MonoBehaviour
         ResetScrollview();
     }
 
-    void AddDicomSeriesRows(JArray dicomSeries)
+    void AddDicomSeriesRow(DicomSeries dicomSeries)
     {
-        seriesContent.SetActive(true);
+        string seriesValue = "-------------------------------------------------------------------------------------------- \n";
 
-        foreach (JObject item in dicomSeries)
+        foreach (var property in typeof(DicomSeries).GetProperties())
         {
-            DicomSeries series = item.ToObject<DicomSeries>();
-            string seriesValue = "-------------------------------------------------------------------------------------------- \n";
-
-            foreach (var property in typeof(DicomSeries).GetProperties())
-            {
-                object val = property.GetValue(series);
-                seriesValue += $"{property.Name}: {val} \n";
-            }
-            Text seriesData = (Text)Instantiate(seriesText, seriesContent.transform);
-            seriesData.text = seriesValue;
-
+            object val = property.GetValue(dicomSeries);
+            seriesValue += $"{property.Name}: {val} \n";
         }
-        seriesText.gameObject.SetActive(false);
+
+        Text seriesData = (Text)Instantiate(seriesText, seriesContent.transform);
+        seriesData.text = seriesValue;
     }
 
-    void AddDicomStudyRows(JArray dicomStudy)
+    void AddDicomStudyRow(DicomStudy dicomStudy)
     {
-        foreach (JObject item in dicomStudy)
-        {
-            GameObject newRow = Instantiate(rowContent, scrollviewContent.transform);
-            DicomStudyRow dicomStudyRow = newRow.GetComponent<DicomStudyRow>();
-            DicomStudy study = item.ToObject<DicomStudy>();
-            dicomStudyRow.SetStudyData(study);
-            newRow.name = newRow.name + study.id.ToString();
-        }
+        GameObject newRow = Instantiate(rowContent, scrollviewContent.transform);
+        DicomStudyRow dicomStudyRow = newRow.GetComponent<DicomStudyRow>();
+        dicomStudyRow.SetStudyData(dicomStudy);
+        newRow.name = newRow.name + dicomStudy.id.ToString();
         ResetScrollview();
     }
 
@@ -159,9 +149,11 @@ public class DicomTableview : MonoBehaviour
         }
         else
         {
-            JArray dicomStudy = JArray.Parse(reqStudy.downloadHandler.text);
-            AddDicomStudyRows(dicomStudy);
-
+            List<DicomStudy> dicomStudyList = JsonConvert.DeserializeObject<List<DicomStudy>>(reqStudy.downloadHandler.text);
+            foreach (DicomStudy studyData in dicomStudyList)
+            {
+                AddDicomStudyRow(studyData);
+            }
         }
     }
 
@@ -176,8 +168,13 @@ public class DicomTableview : MonoBehaviour
         }
         else
         {
-            JArray dicomSeries = JArray.Parse(reqSeries.downloadHandler.text);
-            AddDicomSeriesRows(dicomSeries);
+            List<DicomSeries> dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
+            seriesContent.SetActive(true);
+            foreach (DicomSeries seriesData in dicomSeriesList)
+            {
+                AddDicomSeriesRow(seriesData);
+            }
+            seriesText.gameObject.SetActive(false);
         }
     }
 
