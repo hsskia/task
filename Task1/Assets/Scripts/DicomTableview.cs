@@ -31,7 +31,7 @@ public class DicomTableview : MonoBehaviour
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
     private string studyId;
 
-    void OnClick()
+    public void OnClick()
     {
         GameObject btn = EventSystem.current.currentSelectedGameObject;
         studyId = btn.GetComponentInChildren<Text>().text;
