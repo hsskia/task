@@ -28,7 +28,6 @@ public class DicomDataSearch : MonoBehaviour
 
     [SerializeField] private InputField inputField;
     [SerializeField] private Text searchText;
-    [SerializeField] private Button searchButton;
     [SerializeField] private string keyword;
 
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
