@@ -453,7 +453,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 514762598}
         m_TargetAssemblyTypeName: dicom_data_search, Assembly-CSharp
-        m_MethodName: on_click_search
+        m_MethodName: OnClickSearch
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -532,8 +532,9 @@ GameObject:
   - component: {fileID: 451361206}
   - component: {fileID: 451361208}
   - component: {fileID: 451361207}
+  - component: {fileID: 451361209}
   m_Layer: 5
-  m_Name: Row_Content
+  m_Name: RowContent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -603,6 +604,23 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &451361209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 451361205}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7b79fceb6cb48458953211db82da46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idText: {fileID: 1739508865}
+  nameText: {fileID: 1718916273}
+  descriptionText: {fileID: 1873018309}
+  patientIdText: {fileID: 305092391}
+  numSeriesText: {fileID: 1525449807}
 --- !u!1 &502153538
 GameObject:
   m_ObjectHideFlags: 0
@@ -947,7 +965,7 @@ GameObject:
   - component: {fileID: 856929710}
   - component: {fileID: 856929711}
   m_Layer: 5
-  m_Name: ScrollView_Content
+  m_Name: ScrollViewContent
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1250,7 +1268,7 @@ GameObject:
   - component: {fileID: 982587016}
   - component: {fileID: 982587015}
   m_Layer: 5
-  m_Name: search_text
+  m_Name: searchText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1420,7 +1438,7 @@ GameObject:
   - component: {fileID: 1322545000}
   - component: {fileID: 1322544999}
   m_Layer: 5
-  m_Name: Study_ScrollView
+  m_Name: StudyScrollView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1597,7 +1615,7 @@ GameObject:
   - component: {fileID: 1401663195}
   - component: {fileID: 1401663194}
   m_Layer: 5
-  m_Name: Series Scroll View
+  m_Name: SeriesScrollView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
