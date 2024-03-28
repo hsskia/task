@@ -645,7 +645,8 @@ MonoBehaviour:
   rowContent: {fileID: 1426277291}
   seriesContent: {fileID: 1498893611}
   searchContent: {fileID: 651002155}
-  seriesText: {fileID: 502153540}
+  seriesButton: {fileID: 1842797094}
+  seriesText: {fileID: 1890504401}
   inputField: {fileID: 1055696613}
   searchText: {fileID: 1339072955}
   keyword: 
@@ -2417,8 +2418,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -21.4836, y: -55.18643}
-  m_SizeDelta: {x: 766.624, y: 324.7148}
+  m_AnchoredPosition: {x: 261, y: -51.55188}
+  m_SizeDelta: {x: 486.0374, y: 317.4457}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1401663194
 MonoBehaviour:
@@ -2738,7 +2739,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 502153539}
+  - {fileID: 1842797091}
   m_Father: {fileID: 1282244585}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
