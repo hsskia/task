@@ -7,10 +7,11 @@ using System.Collections;
 using UnityEngine.EventSystems;
 using StudyRow;
 using Newtonsoft.Json;
+using System.IO;
+using Mars;
 
-public class DicomTableview : MonoBehaviour
+public class DicomImageViewer : MonoBehaviour
 {
-
     [SerializeField] private ScrollRect studyScrollview;
     [SerializeField] private ScrollRect seriesScrollview;
 
@@ -19,11 +20,12 @@ public class DicomTableview : MonoBehaviour
     [SerializeField] private GameObject seriesContent;
     [SerializeField] private GameObject searchContent;
 
-    [SerializeField] private Text seriesText;
+    [SerializeField] private Button seriesButton;
 
     [SerializeField] private InputField inputField;
     [SerializeField] private Text searchText;
     [SerializeField] private string keyword;
+    [SerializeField] private RawImage volumeImage;
 
     [SerializeField] private Button resetButton;
 
@@ -82,6 +84,24 @@ public class DicomTableview : MonoBehaviour
         VisibilityDicomSearchKeyword(searchIdList);
     }
 
+    public void OnClickSeriesId()
+    {
+        volumeImage.gameObject.SetActive(true);
+        GameObject seriesIdButton = EventSystem.current.currentSelectedGameObject;
+        seriesId = seriesIdButton.name.Split(")")[^1];
+        GetDicomVolume(dicomIdVolumePathDict[seriesId]);
+    }
+
+    void GetDicomVolume(string volumePath)
+    {
+        string volumeURLPath = dicomVolumeURL + volumePath;
+        volumeFile = Application.persistentDataPath + "_" + seriesId + ".nrrd";
+        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(volumeURLPath));
+
+        //Mat imageMat = Imgcodecs.imread(filePath);
+
+    }
+
     void VisibilityDicomSearchKeyword(List<string> searchedData)
     {
         Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
@@ -106,7 +126,7 @@ public class DicomTableview : MonoBehaviour
         ResetScrollview();
     }
 
-    // 스크롤뷰 초기화 -> 데이터의 크기만큼 화면이 출력되도록
+    // 데이터의 크기만큼 화면이 출력되도록
     void ResetScrollview()
     {
         studyScrollview.gameObject.SetActive(false);
@@ -147,11 +167,12 @@ public class DicomTableview : MonoBehaviour
         }
 
         ResetScrollview();
+
     }
 
     void AddDicomSeriesRow(DicomSeries dicomSeries)
     {
-        string seriesValue = "-------------------------------------------------------------------------------------------- \n";
+        string seriesValue = "";
 
         foreach (var property in typeof(DicomSeries).GetProperties())
         {
@@ -213,6 +234,7 @@ public class DicomTableview : MonoBehaviour
         {
             List<DicomSeries> dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
             seriesContent.SetActive(true);
+            dicomIdVolumePathDict = new Dictionary<string, string>();
             foreach (DicomSeries seriesData in dicomSeriesList)
             {
                 AddDicomSeriesRow(seriesData);
@@ -220,4 +242,18 @@ public class DicomTableview : MonoBehaviour
         }
     }
 
+    IEnumerator GetVolumeData(string volumeURLPath)
+    {
+        UnityWebRequest reqVolume = UnityWebRequest.Get(volumeURLPath);
+        yield return reqVolume.SendWebRequest();
+
+        if (reqVolume.result != UnityWebRequest.Result.Success)
+        {
+            Debug.Log($"Dicom Series ID {seriesId} 의 Volume 파일은 존재하지 않습니다.");
+        }
+        else
+        {
+            File.WriteAllBytes(volumeFile, reqVolume.downloadHandler.data);
+        }
+    }
 }
