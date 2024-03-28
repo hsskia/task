@@ -13,6 +13,7 @@ using UnityEditor;
 using Unity.IO.LowLevel.Unsafe;
 using StudyRow;
 using Newtonsoft.Json;
+using System.IO;
 
 public class DicomImageViewer : MonoBehaviour
 {
@@ -31,9 +32,15 @@ public class DicomImageViewer : MonoBehaviour
     [SerializeField] private string keyword;
 
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
+    private const string dicomVolumeURL = "http://10.10.20.173:5080/dicom/";
+    private const string dicomVolumeDataFilePath = "./Assets/VolumeData/"; // Volume Data 가 저장될 상대 경로
     private string studyId;
     private string seriesId;
+    private string volumeFile;
     private List<DicomStudy> dicomStudyList;
+
+    // key: seriesID, value: volumeFilePath
+    private Dictionary<string, string> dicomIdVolumePathDict;
 
     public void OnClickStudyId()
     {
@@ -76,7 +83,15 @@ public class DicomImageViewer : MonoBehaviour
     {
         GameObject seriesIdButton = EventSystem.current.currentSelectedGameObject;
         seriesId = seriesIdButton.name.Split(")")[^1];
-        StartCoroutine(GetSeriesImage());
+        GetDicomVolume(dicomIdVolumePathDict[seriesId]);
+    }
+
+    void GetDicomVolume(string volumePath)
+    {
+        string volumeURLPath = dicomVolumeURL + volumePath;
+        volumeFile = dicomVolumeDataFilePath + seriesId + ".nrrd";
+        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(volumeURLPath));
+
     }
 
     void VisibilityDicomSearchKeyword(List<string> searchedData)
@@ -178,6 +193,7 @@ public class DicomImageViewer : MonoBehaviour
         Button seriesData = Instantiate(seriesButton, seriesContent.transform);
         seriesData.GetComponentInChildren<Text>().text = seriesValue;
         seriesData.name = seriesData.name + dicomSeries.id;
+        dicomIdVolumePathDict.Add(dicomSeries.id.ToString(), dicomSeries.volumeFilePath);
     }
 
     void AddDicomStudyRow(DicomStudy dicomStudy)
@@ -227,6 +243,7 @@ public class DicomImageViewer : MonoBehaviour
         {
             List<DicomSeries> dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
             seriesContent.SetActive(true);
+            dicomIdVolumePathDict = new Dictionary<string, string>();
             foreach (DicomSeries seriesData in dicomSeriesList)
             {
                 AddDicomSeriesRow(seriesData);
@@ -235,20 +252,18 @@ public class DicomImageViewer : MonoBehaviour
         }
     }
 
-    IEnumerator GetSeriesImage()
+    IEnumerator GetVolumeData(string volumeURLPath)
     {
-        UnityWebRequest reqSeriesImage = UnityWebRequest.Get(dicomURL + "File?seriesId=" + seriesId);
-        yield return reqSeriesImage.SendWebRequest();
+        UnityWebRequest reqVolume = UnityWebRequest.Get(volumeURLPath);
+        yield return reqVolume.SendWebRequest();
 
-        if (reqSeriesImage.result != UnityWebRequest.Result.Success)
+        if (reqVolume.result != UnityWebRequest.Result.Success)
         {
-            Debug.Log(reqSeriesImage.error);
+            Debug.Log($"Dicom Series ID {seriesId} 의 Volulme 파일은 존재하지 않습니다.");
         }
         else
         {
-            JArray DicomImageData = JArray.Parse(reqSeriesImage.downloadHandler.text);
-            print(DicomImageData[0]["filePath"].ToString());
+            File.WriteAllBytes(volumeFile, reqVolume.downloadHandler.data);
         }
     }
-
 }
