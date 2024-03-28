@@ -581,7 +581,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 514762590}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99275966b0f49ee47be8464e06578dc9, type: 3}
+  m_Script: {fileID: 11500000, guid: 378035d5507ed3847b676e6fc65a3f22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   studyScrollview: {fileID: 1322544999}
@@ -923,7 +923,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 514762595}
-        m_TargetAssemblyTypeName: DicomDataSearch, Assembly-CSharp
+        m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
         m_MethodName: OnClickId
         m_Mode: 1
         m_Arguments:
@@ -1572,7 +1572,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 514762595}
-        m_TargetAssemblyTypeName: DicomDataSearch, Assembly-CSharp
+        m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
         m_MethodName: OnClickSearch
         m_Mode: 1
         m_Arguments:

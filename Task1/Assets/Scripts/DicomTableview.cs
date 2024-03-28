@@ -1,16 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
 using Mars.db;
 using UnityEngine.Networking;
 using System.Collections;
 using UnityEngine.EventSystems;
-using System.Resources;
-using JetBrains.Annotations;
 using System.Text.RegularExpressions;
-using UnityEditor;
-using Unity.VisualScripting;
 using StudyRow;
 using Newtonsoft.Json;
 
@@ -18,21 +13,24 @@ public class DicomTableview : MonoBehaviour
 {
 
     [SerializeField] private ScrollRect studyScrollview;
-
     [SerializeField] private ScrollRect seriesScrollview;
 
     [SerializeField] private GameObject scrollviewContent;
-
     [SerializeField] private GameObject rowContent;
-
     [SerializeField] private GameObject seriesContent;
+    [SerializeField] private GameObject searchContent;
 
     [SerializeField] private Text seriesText;
 
+    [SerializeField] private InputField inputField;
+    [SerializeField] private Text searchText;
+    [SerializeField] private string keyword;
+
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
     private string studyId;
+    private List<DicomStudy> dicomStudyList;
 
-    public void OnClick()
+    public void OnClickId()
     {
         GameObject btn = EventSystem.current.currentSelectedGameObject;
         studyId = btn.GetComponentInChildren<Text>().text;
@@ -49,6 +47,48 @@ public class DicomTableview : MonoBehaviour
             StartCoroutine(GetSeriesData());
             SetStudyVisibility(false);
         }
+    }
+
+    public void OnClickSearch()
+    {
+        keyword = searchText.text;
+        List<string> searchIdList = new List<string>();
+
+        foreach (DicomStudy item in dicomStudyList)
+        {
+            // patientID 나 patientName 뿐만 아니라 전체 field 를 기준으로 keyword 찾기
+            string dicomStudyString = JsonConvert.SerializeObject(item);
+            if (dicomStudyString.Contains(keyword))
+            {
+                searchIdList.Add(item.id.ToString());
+            }
+        }
+
+        VisibilityDicomSearchKeyword(searchIdList);
+    }
+
+    void VisibilityDicomSearchKeyword(List<string> searchedData)
+    {
+        Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
+        for (int i = 1; i < childObject.Length; i++)
+        {
+            string childName = childObject[i].name;
+            string childId = Regex.Replace(childName, @"[^0-9]", "");
+
+            // keyword 가 포함된 데이터들의 ID 로 구성된 searchedData 에
+            // 해당되는 object 면 활성화, keyword 가 포함 안 되었으면 비활성화
+            if (searchedData.Count == dicomStudyList.Count)
+            {
+                childObject[i].gameObject.SetActive(true);
+            }
+            else if (childName.Contains("Clone") &
+            (!searchedData.Contains(childId))) // id가 일치하는 data 외에는 모두 비활성화
+            {
+                childObject[i].gameObject.SetActive(false);
+            }
+        }
+
+        ResetScrollview();
     }
 
     // 스크롤뷰 초기화 -> 데이터의 크기만큼 화면이 출력되도록
@@ -77,11 +117,13 @@ public class DicomTableview : MonoBehaviour
         {
             // study data가 활성화되면 series 데이터는 비활성화되어 화면이 겹치는 것 방지
             seriesScrollview.gameObject.SetActive(false);
+            searchContent.gameObject.SetActive(true);
         }
         else
         {
             seriesScrollview.gameObject.SetActive(true);
             seriesText.gameObject.SetActive(true);
+            searchContent.SetActive(false);
         }
 
         Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
@@ -149,7 +191,8 @@ public class DicomTableview : MonoBehaviour
         }
         else
         {
-            List<DicomStudy> dicomStudyList = JsonConvert.DeserializeObject<List<DicomStudy>>(reqStudy.downloadHandler.text);
+            dicomStudyList = JsonConvert.DeserializeObject<List<DicomStudy>>(reqStudy.downloadHandler.text);
+            inputField.textComponent = searchText;
             foreach (DicomStudy studyData in dicomStudyList)
             {
                 AddDicomStudyRow(studyData);
