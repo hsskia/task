@@ -64,6 +64,48 @@ public class DicomTableview : MonoBehaviour
         }
     }
 
+    public void OnClickSearch()
+    {
+        keyword = searchText.text;
+        List<string> searchIdList = new List<string>();
+
+        foreach (DicomStudy item in dicomStudyList)
+        {
+            // patientID 나 patientName 뿐만 아니라 전체 field 를 기준으로 keyword 찾기
+            string dicomStudyString = JsonConvert.SerializeObject(item);
+            if (dicomStudyString.Contains(keyword))
+            {
+                searchIdList.Add(item.id.ToString());
+            }
+        }
+
+        VisibilityDicomSearchKeyword(searchIdList);
+    }
+
+    void VisibilityDicomSearchKeyword(List<string> searchedData)
+    {
+        Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
+        for (int i = 1; i < childObject.Length; i++)
+        {
+            string childName = childObject[i].name;
+            string childId = Regex.Replace(childName, @"[^0-9]", "");
+
+            // keyword 가 포함된 데이터들의 ID 로 구성된 searchedData 에
+            // 해당되는 object 면 활성화, keyword 가 포함 안 되었으면 비활성화
+            if (searchedData.Count == dicomStudyList.Count)
+            {
+                childObject[i].gameObject.SetActive(true);
+            }
+            else if (childName.Contains("Clone") &
+            (!searchedData.Contains(childId))) // id가 일치하는 data 외에는 모두 비활성화
+            {
+                childObject[i].gameObject.SetActive(false);
+            }
+        }
+
+        ResetScrollview();
+    }
+
     // 스크롤뷰 초기화 -> 데이터의 크기만큼 화면이 출력되도록
     void ResetScrollview()
     {
