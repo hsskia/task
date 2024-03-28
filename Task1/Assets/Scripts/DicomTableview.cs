@@ -8,7 +8,7 @@ using UnityEngine.EventSystems;
 using StudyRow;
 using Newtonsoft.Json;
 using System.IO;
-using Mars;
+//using Mars;
 
 public class DicomImageViewer : MonoBehaviour
 {
@@ -25,7 +25,9 @@ public class DicomImageViewer : MonoBehaviour
     [SerializeField] private InputField inputField;
     [SerializeField] private Text searchText;
     [SerializeField] private string keyword;
+
     [SerializeField] private RawImage volumeImage;
+    [SerializeField] private Slider volumeSlider;
 
     [SerializeField] private Button resetButton;
 
@@ -87,9 +89,16 @@ public class DicomImageViewer : MonoBehaviour
     public void OnClickSeriesId()
     {
         volumeImage.gameObject.SetActive(true);
+        volumeSlider.gameObject.SetActive(true);
         GameObject seriesIdButton = EventSystem.current.currentSelectedGameObject;
         seriesId = seriesIdButton.name.Split(")")[^1];
         GetDicomVolume(dicomIdVolumePathDict[seriesId]);
+        volumeSlider.onValueChanged.AddListener(delegate { OnSliderValueChanged(); });
+    }
+
+    public void OnSliderValueChanged()
+    {
+        print(volumeSlider.value.ToString()); // slider 의 index 에 따라 이미지가 바뀌도록 구현해보자.
     }
 
     void GetDicomVolume(string volumePath)
@@ -97,8 +106,6 @@ public class DicomImageViewer : MonoBehaviour
         string volumeURLPath = dicomVolumeURL + volumePath;
         volumeFile = Application.persistentDataPath + "_" + seriesId + ".nrrd";
         if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(volumeURLPath));
-
-        //Mat imageMat = Imgcodecs.imread(filePath);
 
     }
 
