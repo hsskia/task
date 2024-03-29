@@ -26,6 +26,8 @@ public class DicomTableview : MonoBehaviour
     [SerializeField] private Text searchText;
     [SerializeField] private string keyword;
 
+    [SerializeField] private Button resetButton;
+
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
     private string studyId;
     private List<DicomStudy> dicomStudyList;
@@ -33,20 +35,20 @@ public class DicomTableview : MonoBehaviour
     public void OnClickId()
     {
         GameObject btn = EventSystem.current.currentSelectedGameObject;
-        studyId = btn.GetComponentInChildren<Text>().text;
+        studyId = btn.transform.parent.name.Split(")")[^1];
 
-        // ID 버튼을 클릭했을 때 처음으로 원상복구 되도록
-        if (studyId == "ID")
-        {
-            SetStudyVisibility(true);
-            RemoveSeriesObject();
-        }
-        else
+        if (studyId != "RowContent")
         {
             RemoveSeriesObject();
             StartCoroutine(GetSeriesData());
             SetStudyVisibility(false);
         }
+    }
+
+    public void OnClickReset()
+    {
+        SetStudyVisibility(true);
+        RemoveSeriesObject();
     }
 
     public void OnClickSearch()
@@ -118,12 +120,14 @@ public class DicomTableview : MonoBehaviour
             // study data가 활성화되면 series 데이터는 비활성화되어 화면이 겹치는 것 방지
             seriesScrollview.gameObject.SetActive(false);
             searchContent.gameObject.SetActive(true);
+            resetButton.gameObject.SetActive(false);
         }
         else
         {
             seriesScrollview.gameObject.SetActive(true);
             seriesText.gameObject.SetActive(true);
             searchContent.SetActive(false);
+            resetButton.gameObject.SetActive(true);
         }
 
         Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
