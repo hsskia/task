@@ -93,18 +93,32 @@ public class DicomImageViewer : MonoBehaviour
         GameObject seriesIdButton = EventSystem.current.currentSelectedGameObject;
         seriesId = seriesIdButton.name.Split(")")[^1];
         GetDicomVolume(dicomIdVolumePathDict[seriesId]);
+
+        // 3개의 샘플 이미지로 slider 를 움직일 때 원하는 이미지가 나오는지 테스트
+        DirectoryInfo di = new DirectoryInfo(Application.persistentDataPath + "/");
+        testImages = new Texture2D[di.GetFiles().Length];
+        volumeSlider.maxValue = di.GetFiles().Length - 1;
+
+        for (int i = 0; i < di.GetFiles().Length; i++)
+        {
+            byte[] fileData = File.ReadAllBytes(di.GetFiles()[i].ToString());
+            Texture2D texture = new Texture2D(2, 2);
+            texture.LoadImage(fileData);
+            testImages[i] = texture;
+        }
+        volumeImage.texture = testImages[(int)volumeSlider.value];
         volumeSlider.onValueChanged.AddListener(delegate { OnSliderValueChanged(); });
     }
 
     public void OnSliderValueChanged()
     {
-        print(volumeSlider.value.ToString()); // slider 의 index 에 따라 이미지가 바뀌도록 구현해보자.
+        volumeImage.texture = testImages[(int)volumeSlider.value];
     }
 
     void GetDicomVolume(string volumePath)
     {
         string volumeURLPath = dicomVolumeURL + volumePath;
-        volumeFile = Application.persistentDataPath + "_" + seriesId + ".nrrd";
+        volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
         if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(volumeURLPath));
 
     }
@@ -260,7 +274,7 @@ public class DicomImageViewer : MonoBehaviour
         }
         else
         {
-            File.WriteAllBytes(volumeFile, reqVolume.downloadHandler.data);
+            //File.WriteAllBytes(volumeFile, reqVolume.downloadHandler.data);
         }
     }
 }
