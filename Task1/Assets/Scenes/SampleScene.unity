@@ -394,7 +394,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 514762595}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickRow
+        m_MethodName: OnClickStudyRow
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -772,7 +772,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 514762595}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickRow
+        m_MethodName: OnClickStudyRow
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1325,7 +1325,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 514762595}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickRow
+        m_MethodName: OnClickStudyRow
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1458,7 +1458,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 514762595}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickRow
+        m_MethodName: OnClickStudyRow
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3537,7 +3537,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 514762595}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickRow
+        m_MethodName: OnClickStudyRow
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

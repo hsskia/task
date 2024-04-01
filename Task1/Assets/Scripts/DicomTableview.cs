@@ -28,22 +28,20 @@ public class DicomTableview : MonoBehaviour
     [SerializeField] private Button resetButton;
 
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
-    private string studyId;
     private List<DicomStudy> dicomStudyList;
-    private List<DicomSeries> dicomSeriesList;
     private readonly Dictionary<string, GameObject> dicomStudyRowContents = new();
     private readonly List<Text> dicomSeriesTexts = new();
 
-    public void OnClickRow()
+    public void OnClickStudyRow()
     {
-        GameObject btn = EventSystem.current.currentSelectedGameObject;
-        studyId = btn.transform.parent.name.Split(")")[^1];
+        GameObject studyRowButton = EventSystem.current.currentSelectedGameObject;
+        string studyId = studyRowButton.transform.parent.name.Split(")")[^1];
 
         if (studyId != "RowContent")
         {
             RemoveSeriesObject();
-            StartCoroutine(GetSeriesData());
-            SetStudyVisibility(false);
+            StartCoroutine(GetSeriesData(studyId));
+            SetStudyVisibility(false, studyId);
         }
     }
 
@@ -56,15 +54,13 @@ public class DicomTableview : MonoBehaviour
     public void OnClickSearch()
     {
         keyword = searchText.text;
-        foreach (DicomStudy item in dicomStudyList)
+        foreach (DicomStudy dicomData in dicomStudyList)
         {
             // patientID 나 patientName 뿐만 아니라 전체 field 를 기준으로 keyword 찾기
-            string dicomStudyString = JsonConvert.SerializeObject(item);
-            dicomStudyRowContents[item.id.ToString()].SetActive(false);
-            if (dicomStudyString.Contains(keyword))
-            {
-                dicomStudyRowContents[item.id.ToString()].SetActive(true);
-            }
+            string dicomStudyString = JsonConvert.SerializeObject(dicomData);
+            dicomStudyRowContents[dicomData.id.ToString()].SetActive(false);
+            if (dicomStudyString.Contains(keyword)) dicomStudyRowContents[dicomData.id.ToString()].SetActive(true);
+
         }
     }
 
@@ -84,9 +80,9 @@ public class DicomTableview : MonoBehaviour
         dicomSeriesTexts.Clear();
     }
 
-    void SetStudyVisibility(bool check)
+    void SetStudyVisibility(bool studyDataVisible, string studyId = "")
     {
-        if (check)
+        if (studyDataVisible)
         {
             // study data가 활성화되면 series 데이터는 비활성화되어 화면이 겹치는 것 방지
             seriesScrollview.gameObject.SetActive(false);
@@ -103,7 +99,7 @@ public class DicomTableview : MonoBehaviour
         foreach (string rowStudyId in dicomStudyRowContents.Keys)
         {
             dicomStudyRowContents[rowStudyId].SetActive(true);
-            if (check) continue;
+            if (studyDataVisible) continue;
             if (rowStudyId != studyId) dicomStudyRowContents[rowStudyId].SetActive(false);
 
         }
@@ -129,11 +125,11 @@ public class DicomTableview : MonoBehaviour
 
     void AddDicomStudyRow(DicomStudy dicomStudy)
     {
-        GameObject newRow = Instantiate(rowContent, scrollviewContent.transform);
-        DicomStudyRow dicomStudyRow = newRow.GetComponent<DicomStudyRow>();
-        dicomStudyRowContents.Add(dicomStudy.id.ToString(), newRow);
+        GameObject newStudyRow = Instantiate(rowContent, scrollviewContent.transform);
+        DicomStudyRow dicomStudyRow = newStudyRow.GetComponent<DicomStudyRow>();
+        dicomStudyRowContents.Add(dicomStudy.id.ToString(), newStudyRow);
         dicomStudyRow.SetStudyData(dicomStudy);
-        newRow.name += dicomStudy.id.ToString();
+        newStudyRow.name += dicomStudy.id.ToString();
     }
 
     void Start()
@@ -162,7 +158,7 @@ public class DicomTableview : MonoBehaviour
         }
     }
 
-    IEnumerator GetSeriesData()
+    IEnumerator GetSeriesData(string studyId)
     {
         UnityWebRequest reqSeries = UnityWebRequest.Get(dicomURL + "Series?studyId=" + studyId);
         yield return reqSeries.SendWebRequest();
@@ -173,7 +169,7 @@ public class DicomTableview : MonoBehaviour
         }
         else
         {
-            dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
+            List<DicomSeries> dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
             seriesContent.SetActive(true);
             foreach (DicomSeries seriesData in dicomSeriesList)
             {
