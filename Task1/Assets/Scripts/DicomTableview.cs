@@ -5,7 +5,6 @@ using Mars.db;
 using UnityEngine.Networking;
 using System.Collections;
 using UnityEngine.EventSystems;
-using System.Text.RegularExpressions;
 using StudyRow;
 using Newtonsoft.Json;
 
@@ -31,8 +30,11 @@ public class DicomTableview : MonoBehaviour
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
     private string studyId;
     private List<DicomStudy> dicomStudyList;
+    private List<DicomSeries> dicomSeriesList;
+    private readonly Dictionary<string, GameObject> dicomStudyRowContents = new();
+    private readonly List<Text> dicomSeriesTexts = new();
 
-    public void OnClickId()
+    public void OnClickRow()
     {
         GameObject btn = EventSystem.current.currentSelectedGameObject;
         studyId = btn.transform.parent.name.Split(")")[^1];
@@ -54,43 +56,16 @@ public class DicomTableview : MonoBehaviour
     public void OnClickSearch()
     {
         keyword = searchText.text;
-        List<string> searchIdList = new List<string>();
-
         foreach (DicomStudy item in dicomStudyList)
         {
             // patientID 나 patientName 뿐만 아니라 전체 field 를 기준으로 keyword 찾기
             string dicomStudyString = JsonConvert.SerializeObject(item);
+            dicomStudyRowContents[item.id.ToString()].SetActive(false);
             if (dicomStudyString.Contains(keyword))
             {
-                searchIdList.Add(item.id.ToString());
+                dicomStudyRowContents[item.id.ToString()].SetActive(true);
             }
         }
-
-        VisibilityDicomSearchKeyword(searchIdList);
-    }
-
-    void VisibilityDicomSearchKeyword(List<string> searchedData)
-    {
-        Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
-        for (int i = 1; i < childObject.Length; i++)
-        {
-            string childName = childObject[i].name;
-            string childId = Regex.Replace(childName, @"[^0-9]", "");
-
-            // keyword 가 포함된 데이터들의 ID 로 구성된 searchedData 에
-            // 해당되는 object 면 활성화, keyword 가 포함 안 되었으면 비활성화
-            if (searchedData.Count == dicomStudyList.Count)
-            {
-                childObject[i].gameObject.SetActive(true);
-            }
-            else if (childName.Contains("Clone") &
-            (!searchedData.Contains(childId))) // id가 일치하는 data 외에는 모두 비활성화
-            {
-                childObject[i].gameObject.SetActive(false);
-            }
-        }
-
-        ResetScrollview();
     }
 
     // 스크롤뷰 초기화 -> 데이터의 크기만큼 화면이 출력되도록
@@ -102,15 +77,11 @@ public class DicomTableview : MonoBehaviour
 
     void RemoveSeriesObject()
     {
-        Transform[] childObject = seriesContent.GetComponentsInChildren<Transform>(true);
-        for (int i = 1; i < childObject.Length; i++)
+        foreach (Text seriesRowText in dicomSeriesTexts)
         {
-            // Study data 만 화면에 출력하기 위해 Series data 를 의미하는 Clone 된 Object 들을 제거
-            if (childObject[i].name.Contains("Clone"))
-            {
-                Destroy(childObject[i].gameObject);
-            }
+            Destroy(seriesRowText.gameObject);
         }
+        dicomSeriesTexts.Clear();
     }
 
     void SetStudyVisibility(bool check)
@@ -119,37 +90,21 @@ public class DicomTableview : MonoBehaviour
         {
             // study data가 활성화되면 series 데이터는 비활성화되어 화면이 겹치는 것 방지
             seriesScrollview.gameObject.SetActive(false);
-            searchContent.gameObject.SetActive(true);
+            searchContent.SetActive(true);
             resetButton.gameObject.SetActive(false);
         }
         else
         {
             seriesScrollview.gameObject.SetActive(true);
-            seriesText.gameObject.SetActive(true);
             searchContent.SetActive(false);
             resetButton.gameObject.SetActive(true);
         }
 
-        Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
-
-        /* index 0번은 모든 Dicom Study Data Row 를 포함하는 GameObject 이기 때문에 이를 비활성화 시킬 경우
-           Series Data 와 일치하는 Study Data 는 남겨두고자 하는 원래 목적이 사라질 수 있기 때문에
-           index 를 1번 부터 시작하여 Series Data 가 표현하는 studyId 와 일치하는 Study Data Row 는
-           활성화된 상태로 남겨둠.
-        */
-        for (int i = 1; i < childObject.Length; i++)
+        foreach (string rowStudyId in dicomStudyRowContents.Keys)
         {
-            childObject[i].gameObject.SetActive(true);
+            dicomStudyRowContents[rowStudyId].SetActive(true);
             if (check) continue;
-
-            string childName = childObject[i].name;
-            string childId = Regex.Replace(childName, @"[^0-9]", "");
-
-            if (childName.Contains("Clone") & // 복제된 이미지가 study data 를 나타내기 때문에 Clone 을 포함한 데이터에 접근
-            (childId != studyId)) // studyId 와 일치하지 않은 study data 를 가진 Object 는 비활성화
-            {
-                childObject[i].gameObject.SetActive(false);
-            }
+            if (rowStudyId != studyId) dicomStudyRowContents[rowStudyId].SetActive(false);
 
         }
 
@@ -166,17 +121,19 @@ public class DicomTableview : MonoBehaviour
             seriesValue += $"{property.Name}: {val} \n";
         }
 
-        Text seriesData = (Text)Instantiate(seriesText, seriesContent.transform);
+        Text seriesData = Instantiate(seriesText, seriesContent.transform);
+        dicomSeriesTexts.Add(seriesData);
         seriesData.text = seriesValue;
+        seriesData.gameObject.SetActive(true);
     }
 
     void AddDicomStudyRow(DicomStudy dicomStudy)
     {
         GameObject newRow = Instantiate(rowContent, scrollviewContent.transform);
         DicomStudyRow dicomStudyRow = newRow.GetComponent<DicomStudyRow>();
+        dicomStudyRowContents.Add(dicomStudy.id.ToString(), newRow);
         dicomStudyRow.SetStudyData(dicomStudy);
-        newRow.name = newRow.name + dicomStudy.id.ToString();
-        ResetScrollview();
+        newRow.name += dicomStudy.id.ToString();
     }
 
     void Start()
@@ -201,6 +158,7 @@ public class DicomTableview : MonoBehaviour
             {
                 AddDicomStudyRow(studyData);
             }
+            ResetScrollview();
         }
     }
 
@@ -215,13 +173,12 @@ public class DicomTableview : MonoBehaviour
         }
         else
         {
-            List<DicomSeries> dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
+            dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
             seriesContent.SetActive(true);
             foreach (DicomSeries seriesData in dicomSeriesList)
             {
                 AddDicomSeriesRow(seriesData);
             }
-            seriesText.gameObject.SetActive(false);
         }
     }
 
