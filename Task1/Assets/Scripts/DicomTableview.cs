@@ -24,7 +24,7 @@ public class DicomImageViewer : MonoBehaviour
 
     [SerializeField] private InputField inputField;
     [SerializeField] private Text searchText;
-    [SerializeField] private string keyword;
+    [SerializeField] private Button resetButton;
 
     [SerializeField] private RawImage volumeImage;
     [SerializeField] private Slider volumeSlider;
@@ -68,22 +68,24 @@ public class DicomImageViewer : MonoBehaviour
         }
     }
 
+    public void OnClickReset()
+    {
+        SetStudyVisibility(true);
+        RemoveSeriesObject();
+    }
+
+
     public void OnClickSearch()
     {
-        keyword = searchText.text;
-        List<string> searchIdList = new List<string>();
-
-        foreach (DicomStudy item in dicomStudyList)
+        string keyword = searchText.text;
+        foreach (DicomStudy dicomData in dicomStudyList)
         {
             // patientID 나 patientName 뿐만 아니라 전체 field 를 기준으로 keyword 찾기
-            string dicomStudyString = JsonConvert.SerializeObject(item);
-            if (dicomStudyString.Contains(keyword))
-            {
-                searchIdList.Add(item.id.ToString());
-            }
-        }
+            string dicomStudyString = JsonConvert.SerializeObject(dicomData);
+            dicomStudyRowContents[dicomData.id.ToString()].SetActive(false);
+            if (dicomStudyString.Contains(keyword)) dicomStudyRowContents[dicomData.id.ToString()].SetActive(true);
 
-        VisibilityDicomSearchKeyword(searchIdList);
+        }
     }
 
     public void OnClickSeriesId()
@@ -91,21 +93,24 @@ public class DicomImageViewer : MonoBehaviour
         volumeImage.gameObject.SetActive(true);
         volumeSlider.gameObject.SetActive(true);
         GameObject seriesIdButton = EventSystem.current.currentSelectedGameObject;
-        seriesId = seriesIdButton.name.Split(")")[^1];
-        GetDicomVolume(dicomIdVolumePathDict[seriesId]);
+        string seriesId = seriesIdButton.name.Split(")")[^1];
+        // GetDicomVolumeRaw(seriesId, dicomIdVolumePathDict[seriesId]);
 
         // 3개의 샘플 이미지로 slider 를 움직일 때 원하는 이미지가 나오는지 테스트
-        DirectoryInfo di = new DirectoryInfo(Application.persistentDataPath + "/");
+        DirectoryInfo di = new(Application.persistentDataPath + "/");
         testImages = new Texture2D[di.GetFiles().Length];
         volumeSlider.maxValue = di.GetFiles().Length - 1;
 
         for (int i = 0; i < di.GetFiles().Length; i++)
         {
             byte[] fileData = File.ReadAllBytes(di.GetFiles()[i].ToString());
-            Texture2D texture = new Texture2D(2, 2);
+            Texture2D texture = new(2, 2);
             texture.LoadImage(fileData);
             testImages[i] = texture;
         }
+
+        // slider 의 시작 지점이 항상 index 0 이 되도록 설정
+        volumeSlider.value = 0;
         volumeImage.texture = testImages[(int)volumeSlider.value];
         volumeSlider.onValueChanged.AddListener(delegate { OnSliderValueChanged(); });
     }
@@ -115,36 +120,12 @@ public class DicomImageViewer : MonoBehaviour
         volumeImage.texture = testImages[(int)volumeSlider.value];
     }
 
-    void GetDicomVolume(string volumePath)
+    void GetDicomVolumeRaw(string seriesId, string volumePath)
     {
         string volumeURLPath = dicomVolumeURL + volumePath;
-        volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
-        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(volumeURLPath));
+        string volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
+        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(seriesId, volumeURLPath, volumeFile));
 
-    }
-
-    void VisibilityDicomSearchKeyword(List<string> searchedData)
-    {
-        Transform[] childObject = scrollviewContent.GetComponentsInChildren<Transform>(true);
-        for (int i = 1; i < childObject.Length; i++)
-        {
-            string childName = childObject[i].name;
-            string childId = Regex.Replace(childName, @"[^0-9]", "");
-
-            // keyword 가 포함된 데이터들의 ID 로 구성된 searchedData 에
-            // 해당되는 object 면 활성화, keyword 가 포함 안 되었으면 비활성화
-            if (searchedData.Count == dicomStudyList.Count)
-            {
-                childObject[i].gameObject.SetActive(true);
-            }
-            else if (childName.Contains("Clone") &
-            (!searchedData.Contains(childId))) // id가 일치하는 data 외에는 모두 비활성화
-            {
-                childObject[i].gameObject.SetActive(false);
-            }
-        }
-
-        ResetScrollview();
     }
 
     // 데이터의 크기만큼 화면이 출력되도록
@@ -167,7 +148,7 @@ public class DicomImageViewer : MonoBehaviour
     {
         if (studyDataVisible)
         {
-            // study data가 활성화되면 series 데이터는 비활성화되어 화면이 겹치는 것 방지
+            // study data가 활성화되면 series 데이터와 Volume 이미지는 비활성화되어 화면이 겹치는 것 방지
             seriesScrollview.gameObject.SetActive(false);
             searchContent.SetActive(true);
             resetButton.gameObject.SetActive(false);
@@ -188,7 +169,6 @@ public class DicomImageViewer : MonoBehaviour
         }
 
         ResetScrollview();
-
     }
 
     void AddDicomSeriesRow(DicomSeries dicomSeries)
@@ -263,7 +243,7 @@ public class DicomImageViewer : MonoBehaviour
         }
     }
 
-    IEnumerator GetVolumeData(string volumeURLPath)
+    IEnumerator GetVolumeData(string seriesId, string volumeURLPath, string volumeFile)
     {
         UnityWebRequest reqVolume = UnityWebRequest.Get(volumeURLPath);
         yield return reqVolume.SendWebRequest();
@@ -274,7 +254,7 @@ public class DicomImageViewer : MonoBehaviour
         }
         else
         {
-            //File.WriteAllBytes(volumeFile, reqVolume.downloadHandler.data);
+            File.WriteAllBytes(volumeFile, reqVolume.downloadHandler.data);
         }
     }
 }
