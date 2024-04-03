@@ -21,6 +21,7 @@ public class DicomImageViewer : MonoBehaviour
     [SerializeField] private GameObject searchContent;
 
     [SerializeField] private Button seriesButton;
+    [SerializeField] private Button searchButton;
 
     [SerializeField] private InputField inputField;
     [SerializeField] private Text searchText;
@@ -38,15 +39,13 @@ public class DicomImageViewer : MonoBehaviour
 
     public void OnClickStudyRow()
     {
-        GameObject studyRowButton = EventSystem.current.currentSelectedGameObject;
-        string studyId = studyRowButton.transform.parent.name.Split(")")[^1];
+        GameObject studyRowContent = EventSystem.current.currentSelectedGameObject.transform.parent.gameObject;
 
-        if (studyId != "RowContent")
-        {
-            RemoveSeriesObject();
-            StartCoroutine(GetSeriesData(studyId));
-            SetStudyVisibility(false, studyId);
-        }
+        // 클릭된 버튼의 부모 object 를 key, 해당 row 의 id 를 value
+        string studyId = reverseDicomStudyRowContents[studyRowContent];
+        RemoveSeriesObject();
+        StartCoroutine(GetSeriesData(studyId));
+        SetStudyVisibility(false, studyId);
     }
 
     public void OnClickReset()
@@ -88,44 +87,32 @@ public class DicomImageViewer : MonoBehaviour
         }
     }
 
-    public void OnClickSeriesId()
+    public void OnClickSeriesData()
     {
         volumeImage.gameObject.SetActive(true);
         volumeSlider.gameObject.SetActive(true);
-        GameObject seriesIdButton = EventSystem.current.currentSelectedGameObject;
-        string seriesId = seriesIdButton.name.Split(")")[^1];
-        // GetDicomVolumeRaw(seriesId, dicomIdVolumePathDict[seriesId]);
+        Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
+        string seriesId = dicomSeriesButtons[seriesDataButton];
+        string volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
+        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(seriesId, volumeFile));
+        ShowVolumeImage(volumeFile);
 
-        // 3개의 샘플 이미지로 slider 를 움직일 때 원하는 이미지가 나오는지 테스트
-        DirectoryInfo di = new(Application.persistentDataPath + "/");
-        testImages = new Texture2D[di.GetFiles().Length];
-        volumeSlider.maxValue = di.GetFiles().Length - 1;
+    }
 
-        for (int i = 0; i < di.GetFiles().Length; i++)
-        {
-            byte[] fileData = File.ReadAllBytes(di.GetFiles()[i].ToString());
-            Texture2D texture = new(2, 2);
-            texture.LoadImage(fileData);
-            testImages[i] = texture;
-        }
-
+    void ShowVolumeImage(string volumeFile)
+    {
+        // NrrdRaw nrrdData = await NrrdRaw.LoadAsync(volumeFile);
+        // var rawVolume = nrrdData.GetBytes();
+        // var test = await Int16Volume.LoadAsync(volumeFile);
         // slider 의 시작 지점이 항상 index 0 이 되도록 설정
-        volumeSlider.value = 0;
-        volumeImage.texture = testImages[(int)volumeSlider.value];
-        volumeSlider.onValueChanged.AddListener(delegate { OnSliderValueChanged(); });
+        // volumeSlider.value = 0;
+        // volumeImage.texture = testImages[(int)volumeSlider.value];
+        // volumeSlider.onValueChanged.AddListener(delegate { OnSliderValueChanged(); });
     }
 
     public void OnSliderValueChanged()
     {
         volumeImage.texture = testImages[(int)volumeSlider.value];
-    }
-
-    void GetDicomVolumeRaw(string seriesId, string volumePath)
-    {
-        string volumeURLPath = dicomVolumeURL + volumePath;
-        string volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
-        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(seriesId, volumeURLPath, volumeFile));
-
     }
 
     // 데이터의 크기만큼 화면이 출력되도록
@@ -190,8 +177,12 @@ public class DicomImageViewer : MonoBehaviour
     void AddDicomStudyRow(DicomStudy dicomStudy)
     {
         GameObject newStudyRow = Instantiate(rowContent, scrollviewContent.transform);
+        Button[] newStudyRowButtons = newStudyRow.GetComponentsInChildren<Button>();
+        foreach (Button button in newStudyRowButtons) { button.onClick.AddListener(OnClickStudyRow); }
+
         DicomStudyRow dicomStudyRow = newStudyRow.GetComponent<DicomStudyRow>();
         dicomStudyRowContents.Add(dicomStudy.id.ToString(), newStudyRow);
+        reverseDicomStudyRowContents.Add(newStudyRow, dicomStudy.id.ToString());
         dicomStudyRow.SetStudyData(dicomStudy);
         newStudyRow.name += dicomStudy.id.ToString();
     }
@@ -218,6 +209,8 @@ public class DicomImageViewer : MonoBehaviour
             {
                 AddDicomStudyRow(studyData);
             }
+            searchButton.onClick.AddListener(OnClickSearch);
+            resetButton.onClick.AddListener(OnClickReset);
             ResetScrollview();
         }
     }
@@ -243,8 +236,10 @@ public class DicomImageViewer : MonoBehaviour
         }
     }
 
-    IEnumerator GetVolumeData(string seriesId, string volumeURLPath, string volumeFile)
+    IEnumerator GetVolumeData(string seriesId, string volumeFile)
     {
+        string volumeURLPath = dicomVolumeURL + dicomIdVolumePathDict[seriesId];
+
         UnityWebRequest reqVolume = UnityWebRequest.Get(volumeURLPath);
         yield return reqVolume.SendWebRequest();
 

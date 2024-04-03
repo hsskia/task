@@ -402,9 +402,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 514762595}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickStudyRow
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -725,6 +725,7 @@ MonoBehaviour:
   seriesContent: {fileID: 1498893611}
   searchContent: {fileID: 651002155}
   seriesButton: {fileID: 443266878}
+  searchButton: {fileID: 1361227414}
   inputField: {fileID: 1055696613}
   searchText: {fileID: 1339072955}
   keyword: 
@@ -849,9 +850,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 514762595}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickStudyRow
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1112,9 +1113,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 514762595}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickReset
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1388,9 +1389,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 514762595}
-        m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickStudyRow
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: DicomImageViewer, Assembly-CSharp
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1521,9 +1522,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 514762595}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickStudyRow
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2328,9 +2329,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 514762595}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickSearch
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3600,9 +3601,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 514762595}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: DicomTableview, Assembly-CSharp
-        m_MethodName: OnClickStudyRow
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
