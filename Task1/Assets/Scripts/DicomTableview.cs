@@ -8,7 +8,11 @@ using UnityEngine.EventSystems;
 using StudyRow;
 using Newtonsoft.Json;
 using System.IO;
-//using Mars;
+using Mars;
+using System.Linq;
+using System.Threading.Tasks;
+using UnityEditor;
+using System;
 
 public class DicomImageViewer : MonoBehaviour
 {
@@ -87,32 +91,61 @@ public class DicomImageViewer : MonoBehaviour
         }
     }
 
-    public void OnClickSeriesData()
+    public async void OnClickSeriesData()
     {
         volumeImage.gameObject.SetActive(true);
         volumeSlider.gameObject.SetActive(true);
         Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
         string seriesId = dicomSeriesButtons[seriesDataButton];
         string volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
-        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(seriesId, volumeFile));
+        if (!File.Exists(volumeFile))
+        {
+            StartCoroutine(GetVolumeData(seriesId, volumeFile));
+            await Task.Delay(TimeSpan.FromSeconds(1));
+        }
         ShowVolumeImage(volumeFile);
-
     }
 
-    void ShowVolumeImage(string volumeFile)
+    async void ShowVolumeImage(string volumeFile)
     {
-        // NrrdRaw nrrdData = await NrrdRaw.LoadAsync(volumeFile);
-        // var rawVolume = nrrdData.GetBytes();
-        // var test = await Int16Volume.LoadAsync(volumeFile);
+        NrrdRaw nrrdData = await NrrdRaw.LoadAsync(volumeFile);
+        NrrdHeader nrrdHeader = nrrdData.Header;
+        int width = nrrdHeader.sizes[0];
+        int height = nrrdHeader.sizes[1];
+        int slices = nrrdHeader.sizes[2];
+
+        short[] imageArray = nrrdData.Int16Data.ToArray();
+        short minValue = imageArray.Min();
+        short maxValue = imageArray.Max();
+        float[] normalizedArray = imageArray.Select(value => (value - minValue) / (float)(maxValue - minValue)).ToArray();
+
+        Dictionary<int, Color[]> slicedArrayDict = new();
+
+        for (int i = 0; i < slices + 1; i++)
+        {
+            float[] slicedImageArray = normalizedArray.Skip(width * height * i).Take(width * height).ToArray();
+            Color[] slicedColors = slicedImageArray.Select(x => new Color(x, x, x)).ToArray();
+            slicedArrayDict[i] = slicedColors;
+        }
+
         // slider 의 시작 지점이 항상 index 0 이 되도록 설정
-        // volumeSlider.value = 0;
-        // volumeImage.texture = testImages[(int)volumeSlider.value];
-        // volumeSlider.onValueChanged.AddListener(delegate { OnSliderValueChanged(); });
+        volumeSlider.value = 0;
+        volumeSlider.maxValue = slices - 1; // index 가 0부터 시작했기 때문에 -1
+
+        Texture2D texture = new(width, height);
+        texture.SetPixels(slicedArrayDict[1]);
+        texture.Apply();
+        volumeImage.texture = texture;
+
+        volumeSlider.onValueChanged.AddListener((value) => OnSliderValueChanged(value, slicedArrayDict, width, height));
     }
 
-    public void OnSliderValueChanged()
+    public void OnSliderValueChanged(float sliderValue, Dictionary<int, Color[]> slicedColorDict, int width, int height)
     {
-        volumeImage.texture = testImages[(int)volumeSlider.value];
+        Texture2D texture = new(width, height);
+        texture.SetPixels(slicedColorDict[(int)sliderValue]);
+        texture.Apply();
+        volumeImage.texture = texture;
     }
 
     // 데이터의 크기만큼 화면이 출력되도록
