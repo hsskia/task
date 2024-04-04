@@ -34,53 +34,52 @@ public class DicomImageViewer : MonoBehaviour
 
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
     private const string dicomVolumeURL = "http://10.10.20.173:5080/dicom/";
-    private List<DicomStudy> dicomStudyList;
-    private readonly Dictionary<string, GameObject> dicomStudyRowContents = new();
-    private readonly Dictionary<GameObject, string> reverseDicomStudyRowContents = new();
-    private readonly Dictionary<Button, string> dicomSeriesButtons = new();
-    private readonly Dictionary<string, string> dicomIdVolumePathDict = new();
+    private readonly Dictionary<string, GameObject> dicomStudyIdRowContents = new();
+    private readonly Dictionary<GameObject, string> dicomStudyRowContentsId = new();
+    private readonly Dictionary<Button, List<string>> dicomSeriesButtonsData = new();
 
-    public void OnClickStudyRow()
+    void OnClickStudyRow()
     {
         GameObject studyRowContent = EventSystem.current.currentSelectedGameObject.transform.parent.gameObject;
 
-        // 클릭된 버튼의 부모 object 를 key, 해당 row 의 studyId 를 value
-        string studyId = reverseDicomStudyRowContents[studyRowContent];
+        // 클릭된 버튼의 부모 object (study data row) 를 key, 해당 row 의 studyId 를 value
+        string studyId = dicomStudyRowContentsId[studyRowContent];
         RemoveSeriesObject();
         StartCoroutine(GetSeriesData(studyId));
-        SetStudyVisibility(false, studyId);
+        SetStudyInVisible(studyId);
 
     }
 
-    public void OnClickReset()
+    void OnClickReset()
     {
-        SetStudyVisibility(true);
+        SetStudyVisible();
         RemoveSeriesObject();
     }
 
 
-    public void OnClickSearch()
+    void OnClickSearch(List<DicomStudy> dicomStudyList)
     {
         string keyword = searchText.text;
         foreach (DicomStudy dicomData in dicomStudyList)
         {
             // patientID 나 patientName 뿐만 아니라 전체 field 를 기준으로 keyword 찾기
             string dicomStudyString = JsonConvert.SerializeObject(dicomData);
-            dicomStudyRowContents[dicomData.id.ToString()].SetActive(false);
-            if (dicomStudyString.Contains(keyword)) dicomStudyRowContents[dicomData.id.ToString()].SetActive(true);
+            dicomStudyIdRowContents[dicomData.id.ToString()].SetActive(false);
+            if (dicomStudyString.Contains(keyword)) dicomStudyIdRowContents[dicomData.id.ToString()].SetActive(true);
 
         }
     }
 
-    public void OnClickSeriesData()
+    void OnClickSeriesData()
     {
         volumeImage.texture = null;
         volumeImage.gameObject.SetActive(true);
         volumeSlider.gameObject.SetActive(true);
         Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
-        string seriesId = dicomSeriesButtons[seriesDataButton];
+        string seriesId = dicomSeriesButtonsData[seriesDataButton][0];
+        string volumePath = dicomSeriesButtonsData[seriesDataButton][1];
         string volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
-        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(seriesId, volumeFile));
+        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(seriesId, volumeFile, volumePath));
         else ShowVolumeImage(volumeFile);
     }
 
@@ -119,7 +118,7 @@ public class DicomImageViewer : MonoBehaviour
         volumeSlider.onValueChanged.AddListener((value) => OnSliderValueChanged(value, volumeTexture, slicedArrayDict));
     }
 
-    public void OnSliderValueChanged(float sliderValue, Texture2D volumeTexture, Dictionary<int, Color[]> slicedColorDict)
+    void OnSliderValueChanged(float sliderValue, Texture2D volumeTexture, Dictionary<int, Color[]> slicedColorDict)
     {
         volumeTexture.SetPixels(slicedColorDict[(int)sliderValue]);
         volumeTexture.Apply();
@@ -135,40 +134,41 @@ public class DicomImageViewer : MonoBehaviour
 
     void RemoveSeriesObject()
     {
-        foreach (Button seriesRowButton in dicomSeriesButtons.Keys)
+        foreach (Button seriesRowButton in dicomSeriesButtonsData.Keys)
         {
             Destroy(seriesRowButton.gameObject);
         }
-        dicomSeriesButtons.Clear();
+        dicomSeriesButtonsData.Clear();
     }
 
-    void SetStudyVisibility(bool studyDataVisible, string studyId = "")
+    void SetStudyVisible()
     {
-        if (studyDataVisible)
-        {
-            // study data가 활성화되면 series 데이터와 Volume 이미지는 비활성화되어 화면이 겹치는 것 방지
-            seriesScrollview.gameObject.SetActive(false);
-            searchContent.SetActive(true);
-            volumeImage.gameObject.SetActive(false);
-            volumeSlider.gameObject.SetActive(false);
-            resetButton.gameObject.SetActive(false);
-        }
-        else
-        {
-            seriesScrollview.gameObject.SetActive(true);
-            seriesButton.gameObject.SetActive(true);
-            searchContent.SetActive(false);
-            resetButton.gameObject.SetActive(true);
-        }
+        // study data가 활성화되면 series 데이터와 Volume 이미지는 비활성화되어 화면이 겹치는 것 방지
+        seriesScrollview.gameObject.SetActive(false);
+        searchContent.SetActive(true);
+        volumeImage.gameObject.SetActive(false);
+        volumeSlider.gameObject.SetActive(false);
+        resetButton.gameObject.SetActive(false);
 
-        foreach (string rowStudyId in dicomStudyRowContents.Keys)
+        foreach (string rowStudyId in dicomStudyIdRowContents.Keys)
         {
-            dicomStudyRowContents[rowStudyId].SetActive(true);
-            if (studyDataVisible) continue;
-            if (rowStudyId != studyId) dicomStudyRowContents[rowStudyId].SetActive(false);
-
+            dicomStudyIdRowContents[rowStudyId].SetActive(true);
         }
+        ResetScrollview();
+    }
 
+    void SetStudyInVisible(string studyId)
+    {
+        seriesScrollview.gameObject.SetActive(true);
+        seriesButton.gameObject.SetActive(true);
+        searchContent.SetActive(false);
+        resetButton.gameObject.SetActive(true);
+
+        foreach (string rowStudyId in dicomStudyIdRowContents.Keys)
+        {
+            dicomStudyIdRowContents[rowStudyId].SetActive(false);
+        }
+        dicomStudyIdRowContents[studyId].SetActive(true);
         ResetScrollview();
     }
 
@@ -185,8 +185,7 @@ public class DicomImageViewer : MonoBehaviour
         Button seriesData = Instantiate(seriesButton, seriesContent.transform);
         seriesData.onClick.AddListener(OnClickSeriesData);
         seriesData.GetComponentInChildren<Text>().text = seriesValue;
-        dicomIdVolumePathDict[dicomSeries.id.ToString()] = dicomSeries.volumeFilePath;
-        dicomSeriesButtons[seriesData] = dicomSeries.id.ToString();
+        dicomSeriesButtonsData[seriesData] = new List<string> { dicomSeries.id.ToString(), dicomSeries.volumeFilePath };
     }
 
     void AddDicomStudyRow(DicomStudy dicomStudy)
@@ -196,8 +195,8 @@ public class DicomImageViewer : MonoBehaviour
         foreach (Button button in newStudyRowButtons) { button.onClick.AddListener(OnClickStudyRow); }
 
         DicomStudyRow dicomStudyRow = newStudyRow.GetComponent<DicomStudyRow>();
-        dicomStudyRowContents[dicomStudy.id.ToString()] = newStudyRow;
-        reverseDicomStudyRowContents[newStudyRow] = dicomStudy.id.ToString();
+        dicomStudyIdRowContents[dicomStudy.id.ToString()] = newStudyRow;
+        dicomStudyRowContentsId[newStudyRow] = dicomStudy.id.ToString();
         dicomStudyRow.SetStudyData(dicomStudy);
     }
 
@@ -217,13 +216,13 @@ public class DicomImageViewer : MonoBehaviour
         }
         else
         {
-            dicomStudyList = JsonConvert.DeserializeObject<List<DicomStudy>>(reqStudy.downloadHandler.text);
+            List<DicomStudy> dicomStudyList = JsonConvert.DeserializeObject<List<DicomStudy>>(reqStudy.downloadHandler.text);
             searchInputField.textComponent = searchText;
             foreach (DicomStudy studyData in dicomStudyList)
             {
                 AddDicomStudyRow(studyData);
             }
-            searchButton.onClick.AddListener(OnClickSearch);
+            searchButton.onClick.AddListener(() => OnClickSearch(dicomStudyList));
             resetButton.onClick.AddListener(OnClickReset);
             ResetScrollview();
         }
@@ -250,9 +249,9 @@ public class DicomImageViewer : MonoBehaviour
         }
     }
 
-    IEnumerator GetVolumeData(string seriesId, string volumeFile)
+    IEnumerator GetVolumeData(string seriesId, string volumeFile, string volumePath)
     {
-        string volumeURLPath = dicomVolumeURL + dicomIdVolumePathDict[seriesId];
+        string volumeURLPath = dicomVolumeURL + volumePath;
 
         UnityWebRequest reqVolume = UnityWebRequest.Get(volumeURLPath);
         yield return reqVolume.SendWebRequest();
