@@ -49,7 +49,6 @@ public class DicomImageViewer : MonoBehaviour
         RemoveSeriesObject();
         StartCoroutine(GetSeriesData(studyId));
         SetStudyVisibility(false, studyId);
-        volumeImage.texture = null;
 
     }
 
@@ -75,6 +74,7 @@ public class DicomImageViewer : MonoBehaviour
 
     public void OnClickSeriesData()
     {
+        volumeImage.texture = null;
         volumeImage.gameObject.SetActive(true);
         volumeSlider.gameObject.SetActive(true);
         Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
@@ -185,8 +185,8 @@ public class DicomImageViewer : MonoBehaviour
         Button seriesData = Instantiate(seriesButton, seriesContent.transform);
         seriesData.onClick.AddListener(OnClickSeriesData);
         seriesData.GetComponentInChildren<Text>().text = seriesValue;
-        dicomIdVolumePathDict.Add(dicomSeries.id.ToString(), dicomSeries.volumeFilePath);
-        dicomSeriesButtons.Add(seriesData, dicomSeries.id.ToString());
+        dicomIdVolumePathDict[dicomSeries.id.ToString()] = dicomSeries.volumeFilePath;
+        dicomSeriesButtons[seriesData] = dicomSeries.id.ToString();
     }
 
     void AddDicomStudyRow(DicomStudy dicomStudy)
@@ -196,8 +196,8 @@ public class DicomImageViewer : MonoBehaviour
         foreach (Button button in newStudyRowButtons) { button.onClick.AddListener(OnClickStudyRow); }
 
         DicomStudyRow dicomStudyRow = newStudyRow.GetComponent<DicomStudyRow>();
-        dicomStudyRowContents.Add(dicomStudy.id.ToString(), newStudyRow);
-        reverseDicomStudyRowContents.Add(newStudyRow, dicomStudy.id.ToString());
+        dicomStudyRowContents[dicomStudy.id.ToString()] = newStudyRow;
+        reverseDicomStudyRowContents[newStudyRow] = dicomStudy.id.ToString();
         dicomStudyRow.SetStudyData(dicomStudy);
     }
 
