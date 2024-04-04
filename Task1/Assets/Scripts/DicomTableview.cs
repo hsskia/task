@@ -32,12 +32,13 @@ public class DicomImageViewer : MonoBehaviour
     [SerializeField] private RawImage volumeImage;
     [SerializeField] private Slider volumeSlider;
 
-    [SerializeField] private Button resetButton;
-
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
+    private const string dicomVolumeURL = "http://10.10.20.173:5080/dicom/";
     private List<DicomStudy> dicomStudyList;
     private readonly Dictionary<string, GameObject> dicomStudyRowContents = new();
-    private readonly List<Text> dicomSeriesTexts = new();
+    private readonly Dictionary<GameObject, string> reverseDicomStudyRowContents = new();
+    private readonly Dictionary<Button, string> dicomSeriesButtons = new();
+    private readonly Dictionary<string, string> dicomIdVolumePathDict = new();
 
     public void OnClickStudyRow()
     {
@@ -50,25 +51,6 @@ public class DicomImageViewer : MonoBehaviour
         SetStudyVisibility(false, studyId);
         volumeImage.texture = null;
 
-    }
-
-    public void OnClickReset()
-    {
-        SetStudyVisibility(true);
-        RemoveSeriesObject();
-    }
-
-    public void OnClickSearch()
-    {
-        keyword = searchText.text;
-        foreach (DicomStudy dicomData in dicomStudyList)
-        {
-            // patientID 나 patientName 뿐만 아니라 전체 field 를 기준으로 keyword 찾기
-            string dicomStudyString = JsonConvert.SerializeObject(dicomData);
-            dicomStudyRowContents[dicomData.id.ToString()].SetActive(false);
-            if (dicomStudyString.Contains(keyword)) dicomStudyRowContents[dicomData.id.ToString()].SetActive(true);
-
-        }
     }
 
     public void OnClickReset()
@@ -153,11 +135,11 @@ public class DicomImageViewer : MonoBehaviour
 
     void RemoveSeriesObject()
     {
-        foreach (Text seriesRowText in dicomSeriesTexts)
+        foreach (Button seriesRowButton in dicomSeriesButtons.Keys)
         {
-            Destroy(seriesRowText.gameObject);
+            Destroy(seriesRowButton.gameObject);
         }
-        dicomSeriesTexts.Clear();
+        dicomSeriesButtons.Clear();
     }
 
     void SetStudyVisibility(bool studyDataVisible, string studyId = "")
@@ -167,11 +149,14 @@ public class DicomImageViewer : MonoBehaviour
             // study data가 활성화되면 series 데이터와 Volume 이미지는 비활성화되어 화면이 겹치는 것 방지
             seriesScrollview.gameObject.SetActive(false);
             searchContent.SetActive(true);
+            volumeImage.gameObject.SetActive(false);
+            volumeSlider.gameObject.SetActive(false);
             resetButton.gameObject.SetActive(false);
         }
         else
         {
             seriesScrollview.gameObject.SetActive(true);
+            seriesButton.gameObject.SetActive(true);
             searchContent.SetActive(false);
             resetButton.gameObject.SetActive(true);
         }
@@ -197,10 +182,11 @@ public class DicomImageViewer : MonoBehaviour
             seriesValue += $"{property.Name}: {val} \n";
         }
 
-        Text seriesData = Instantiate(seriesText, seriesContent.transform);
-        dicomSeriesTexts.Add(seriesData);
-        seriesData.text = seriesValue;
-        seriesData.gameObject.SetActive(true);
+        Button seriesData = Instantiate(seriesButton, seriesContent.transform);
+        seriesData.onClick.AddListener(OnClickSeriesData);
+        seriesData.GetComponentInChildren<Text>().text = seriesValue;
+        dicomIdVolumePathDict.Add(dicomSeries.id.ToString(), dicomSeries.volumeFilePath);
+        dicomSeriesButtons.Add(seriesData, dicomSeries.id.ToString());
     }
 
     void AddDicomStudyRow(DicomStudy dicomStudy)
@@ -260,6 +246,7 @@ public class DicomImageViewer : MonoBehaviour
             {
                 AddDicomSeriesRow(seriesData);
             }
+            seriesButton.gameObject.SetActive(false);
         }
     }
 
