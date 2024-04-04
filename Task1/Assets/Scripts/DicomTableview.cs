@@ -10,9 +10,7 @@ using Newtonsoft.Json;
 using System.IO;
 using Mars;
 using System.Linq;
-using System.Threading.Tasks;
 using UnityEditor;
-using System;
 
 public class DicomImageViewer : MonoBehaviour
 {
@@ -26,10 +24,10 @@ public class DicomImageViewer : MonoBehaviour
 
     [SerializeField] private Button seriesButton;
     [SerializeField] private Button searchButton;
-
-    [SerializeField] private InputField inputField;
-    [SerializeField] private Text searchText;
     [SerializeField] private Button resetButton;
+
+    [SerializeField] private InputField searchInputField;
+    [SerializeField] private Text searchText;
 
     [SerializeField] private RawImage volumeImage;
     [SerializeField] private Slider volumeSlider;
@@ -45,11 +43,13 @@ public class DicomImageViewer : MonoBehaviour
     {
         GameObject studyRowContent = EventSystem.current.currentSelectedGameObject.transform.parent.gameObject;
 
-        // 클릭된 버튼의 부모 object 를 key, 해당 row 의 id 를 value
+        // 클릭된 버튼의 부모 object 를 key, 해당 row 의 studyId 를 value
         string studyId = reverseDicomStudyRowContents[studyRowContent];
         RemoveSeriesObject();
         StartCoroutine(GetSeriesData(studyId));
         SetStudyVisibility(false, studyId);
+        volumeImage.texture = null;
+
     }
 
     public void OnClickReset()
@@ -91,19 +91,15 @@ public class DicomImageViewer : MonoBehaviour
         }
     }
 
-    public async void OnClickSeriesData()
+    public void OnClickSeriesData()
     {
         volumeImage.gameObject.SetActive(true);
         volumeSlider.gameObject.SetActive(true);
         Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
         string seriesId = dicomSeriesButtons[seriesDataButton];
         string volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
-        if (!File.Exists(volumeFile))
-        {
-            StartCoroutine(GetVolumeData(seriesId, volumeFile));
-            await Task.Delay(TimeSpan.FromSeconds(1));
-        }
-        ShowVolumeImage(volumeFile);
+        if (!File.Exists(volumeFile)) StartCoroutine(GetVolumeData(seriesId, volumeFile));
+        else ShowVolumeImage(volumeFile);
     }
 
     async void ShowVolumeImage(string volumeFile)
@@ -120,8 +116,7 @@ public class DicomImageViewer : MonoBehaviour
         float[] normalizedArray = imageArray.Select(value => (value - minValue) / (float)(maxValue - minValue)).ToArray();
 
         Dictionary<int, Color[]> slicedArrayDict = new();
-
-        for (int i = 0; i < slices + 1; i++)
+        for (int i = 0; i < slices; i++)
         {
             float[] slicedImageArray = normalizedArray.Skip(width * height * i).Take(width * height).ToArray();
             Color[] slicedColors = slicedImageArray.Select(x => new Color(x, x, x)).ToArray();
@@ -130,22 +125,23 @@ public class DicomImageViewer : MonoBehaviour
 
         // slider 의 시작 지점이 항상 index 0 이 되도록 설정
         volumeSlider.value = 0;
-        volumeSlider.maxValue = slices - 1; // index 가 0부터 시작했기 때문에 -1
+        volumeSlider.maxValue = slices - 1; // slice 의 index 가 0부터 시작했기 때문에 -1
 
-        Texture2D texture = new(width, height);
-        texture.SetPixels(slicedArrayDict[1]);
-        texture.Apply();
-        volumeImage.texture = texture;
+        Texture2D volumeTexture = new(width, height);
+        volumeTexture.SetPixels(slicedArrayDict[0]);
+        volumeTexture.Apply();
+        volumeImage.texture = volumeTexture;
 
-        volumeSlider.onValueChanged.AddListener((value) => OnSliderValueChanged(value, slicedArrayDict, width, height));
+        // slider 에 새로운 데이터를 사용하기위해 초기화
+        volumeSlider.onValueChanged.RemoveAllListeners();
+        volumeSlider.onValueChanged.AddListener((value) => OnSliderValueChanged(value, volumeTexture, slicedArrayDict));
     }
 
-    public void OnSliderValueChanged(float sliderValue, Dictionary<int, Color[]> slicedColorDict, int width, int height)
+    public void OnSliderValueChanged(float sliderValue, Texture2D volumeTexture, Dictionary<int, Color[]> slicedColorDict)
     {
-        Texture2D texture = new(width, height);
-        texture.SetPixels(slicedColorDict[(int)sliderValue]);
-        texture.Apply();
-        volumeImage.texture = texture;
+        volumeTexture.SetPixels(slicedColorDict[(int)sliderValue]);
+        volumeTexture.Apply();
+        volumeImage.texture = volumeTexture;
     }
 
     // 데이터의 크기만큼 화면이 출력되도록
@@ -217,7 +213,6 @@ public class DicomImageViewer : MonoBehaviour
         dicomStudyRowContents.Add(dicomStudy.id.ToString(), newStudyRow);
         reverseDicomStudyRowContents.Add(newStudyRow, dicomStudy.id.ToString());
         dicomStudyRow.SetStudyData(dicomStudy);
-        newStudyRow.name += dicomStudy.id.ToString();
     }
 
     void Start()
@@ -237,7 +232,7 @@ public class DicomImageViewer : MonoBehaviour
         else
         {
             dicomStudyList = JsonConvert.DeserializeObject<List<DicomStudy>>(reqStudy.downloadHandler.text);
-            inputField.textComponent = searchText;
+            searchInputField.textComponent = searchText;
             foreach (DicomStudy studyData in dicomStudyList)
             {
                 AddDicomStudyRow(studyData);
@@ -261,7 +256,6 @@ public class DicomImageViewer : MonoBehaviour
         {
             List<DicomSeries> dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
             seriesContent.SetActive(true);
-            dicomIdVolumePathDict = new Dictionary<string, string>();
             foreach (DicomSeries seriesData in dicomSeriesList)
             {
                 AddDicomSeriesRow(seriesData);
@@ -279,10 +273,12 @@ public class DicomImageViewer : MonoBehaviour
         if (reqVolume.result != UnityWebRequest.Result.Success)
         {
             Debug.Log($"Dicom Series ID {seriesId} 의 Volume 파일은 존재하지 않습니다.");
+            volumeSlider.maxValue = 0;
         }
         else
         {
             File.WriteAllBytes(volumeFile, reqVolume.downloadHandler.data);
+            ShowVolumeImage(volumeFile);
         }
     }
 }
