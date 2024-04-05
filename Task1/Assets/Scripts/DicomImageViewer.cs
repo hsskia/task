@@ -14,9 +14,10 @@ namespace SeriesImageViewer
         [SerializeField] private RawImage volumeImage;
         [SerializeField] private Slider volumeSlider;
 
-        void OnSliderValueChanged(float sliderValue, Texture2D volumeTexture, Dictionary<int, Color[]> slicedColors)
+        void SetVolumeImage(int sliceNumber, int width, int height, Dictionary<int, Color[]> slicedColors)
         {
-            volumeTexture.SetPixels(slicedColors[(int)sliderValue]);
+            Texture2D volumeTexture = new(width, height);
+            volumeTexture.SetPixels(slicedColors[sliceNumber]);
             volumeTexture.Apply();
             volumeImage.texture = volumeTexture;
         }
@@ -58,14 +59,11 @@ namespace SeriesImageViewer
             volumeSlider.value = 0;
             volumeSlider.maxValue = slices - 1;
 
-            Texture2D volumeTexture = new(width, height);
-            volumeTexture.SetPixels(slicedColors[0]);
-            volumeTexture.Apply();
-            volumeImage.texture = volumeTexture;
+            SetVolumeImage(0, width, height, slicedColors);
 
             // slider 에 새로운 데이터를 사용하기위해 초기화
             volumeSlider.onValueChanged.RemoveAllListeners();
-            volumeSlider.onValueChanged.AddListener((value) => OnSliderValueChanged(value, volumeTexture, slicedColors));
+            volumeSlider.onValueChanged.AddListener((value) => SetVolumeImage((int)value, width, height, slicedColors));
         }
 
         public IEnumerator GetVolumeData(string seriesId, string volumeFile, string volumePath, string dicomVolumeURL)
