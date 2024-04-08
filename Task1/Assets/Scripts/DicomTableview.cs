@@ -9,6 +9,7 @@ using StudyRow;
 using Newtonsoft.Json;
 using System.IO;
 using SeriesImageViewer;
+using System;
 
 public class DicomTableView : MonoBehaviour
 {
@@ -33,7 +34,7 @@ public class DicomTableView : MonoBehaviour
     private const string dicomVolumeURL = "http://10.10.20.173:5080/dicom/";
     private readonly Dictionary<string, GameObject> dicomStudyIdRowContents = new();
     private readonly Dictionary<GameObject, string> dicomStudyRowContentsId = new();
-    private readonly Dictionary<Button, List<string>> dicomSeriesButtonsData = new();
+    private readonly Dictionary<Button, Tuple<string, string>> dicomSeriesButtonsData = new();
 
     void OnClickStudyRow()
     {
@@ -68,8 +69,8 @@ public class DicomTableView : MonoBehaviour
     {
         imageViewer.ResetImageAndSlider();
         Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
-        string seriesId = dicomSeriesButtonsData[seriesDataButton][0];
-        string volumePath = dicomSeriesButtonsData[seriesDataButton][1];
+        string seriesId = dicomSeriesButtonsData[seriesDataButton].Item1;
+        string volumePath = dicomSeriesButtonsData[seriesDataButton].Item2;
         string volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
         if (!File.Exists(volumeFile)) StartCoroutine(imageViewer.GetVolumeData(seriesId, volumeFile, volumePath, dicomVolumeURL));
         else imageViewer.ShowVolumeImage(volumeFile);
@@ -134,7 +135,7 @@ public class DicomTableView : MonoBehaviour
         Button seriesData = Instantiate(seriesButton, seriesContent.transform);
         seriesData.onClick.AddListener(OnClickSeriesData);
         seriesData.GetComponentInChildren<Text>().text = seriesValue;
-        dicomSeriesButtonsData[seriesData] = new List<string> { dicomSeries.id.ToString(), dicomSeries.volumeFilePath };
+        dicomSeriesButtonsData[seriesData] = new Tuple<string, string>(dicomSeries.id.ToString(), dicomSeries.volumeFilePath);
     }
 
     void AddDicomStudyRow(DicomStudy dicomStudy)
