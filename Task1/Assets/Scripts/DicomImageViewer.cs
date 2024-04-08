@@ -22,18 +22,6 @@ namespace SeriesImageViewer
             volumeImage.texture = volumeTexture;
         }
 
-        public void ResetImageAndSlider()
-        {
-            volumeImage.texture = null;
-            SetVolumeVisible(true);
-        }
-
-        public void SetVolumeVisible(bool volumeVisible)
-        {
-            volumeImage.gameObject.SetActive(volumeVisible);
-            volumeSlider.gameObject.SetActive(volumeVisible);
-        }
-
         public async void ShowVolumeImage(string volumeFile)
         {
             NrrdRaw nrrdData = await NrrdRaw.LoadAsync(volumeFile);
@@ -68,6 +56,7 @@ namespace SeriesImageViewer
 
         public IEnumerator GetVolumeData(string seriesId, string volumeFile, string volumePath, string dicomVolumeURL)
         {
+            volumeImage.texture = null;
             string volumeURLPath = dicomVolumeURL + volumePath;
 
             UnityWebRequest reqVolume = UnityWebRequest.Get(volumeURLPath);

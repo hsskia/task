@@ -20,6 +20,7 @@ public class DicomTableView : MonoBehaviour
     [SerializeField] private GameObject rowContent;
     [SerializeField] private GameObject seriesContent;
     [SerializeField] private GameObject searchContent;
+    [SerializeField] private GameObject volumeContent;
 
     [SerializeField] private Button seriesButton;
     [SerializeField] private Button searchButton;
@@ -67,7 +68,8 @@ public class DicomTableView : MonoBehaviour
 
     void OnClickSeriesData()
     {
-        imageViewer.ResetImageAndSlider();
+        volumeContent.SetActive(true);
+        imageViewer = FindObjectOfType<DicomImageViewer>();
         Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
         string seriesId = dicomSeriesButtonsData[seriesDataButton].Item1;
         string volumePath = dicomSeriesButtonsData[seriesDataButton].Item2;
@@ -97,7 +99,7 @@ public class DicomTableView : MonoBehaviour
         // study data가 활성화되면 series 데이터와 volume image 는 비활성화되어 화면이 겹치는 것 방지
         seriesScrollview.gameObject.SetActive(false);
         searchContent.SetActive(true);
-        imageViewer.SetVolumeVisible(false);
+        volumeContent.SetActive(false);
         resetButton.gameObject.SetActive(false);
 
         foreach (string rowStudyId in dicomStudyIdRowContents.Keys)
@@ -154,7 +156,6 @@ public class DicomTableView : MonoBehaviour
     {
         StartCoroutine(GetStudyData());
         resetButton.onClick.AddListener(OnClickReset);
-        imageViewer = FindObjectOfType<DicomImageViewer>();
     }
 
     IEnumerator GetStudyData()

@@ -214,7 +214,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &36976783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -935,6 +935,7 @@ MonoBehaviour:
   rowContent: {fileID: 1426277291}
   seriesContent: {fileID: 1498893611}
   searchContent: {fileID: 651002155}
+  volumeContent: {fileID: 36976782}
   seriesButton: {fileID: 443266878}
   searchButton: {fileID: 1361227414}
   resetButton: {fileID: 836786731}
@@ -2401,7 +2402,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1107632356
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4409,7 +4410,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &2069833128
 MonoBehaviour:
   m_ObjectHideFlags: 0
