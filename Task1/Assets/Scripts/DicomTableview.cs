@@ -14,6 +14,7 @@ using System;
 public class DicomTableView : MonoBehaviour
 {
     [SerializeField] private ScrollRect studyScrollview;
+    [SerializeField] private ScrollRect seriesScrollview;
 
     [SerializeField] private GameObject canvas;
     [SerializeField] private GameObject scrollviewContent;
@@ -99,6 +100,7 @@ public class DicomTableView : MonoBehaviour
     void SetStudyVisible(bool studyVisible, string studyId = "")
     {
         searchContent.SetActive(studyVisible);
+        seriesScrollview.gameObject.SetActive(!studyVisible);
         foreach (string rowStudyId in dicomStudyIdRowContents.Keys)
         {
             dicomStudyIdRowContents[rowStudyId].SetActive(studyVisible);
