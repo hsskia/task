@@ -14,8 +14,8 @@ using System;
 public class DicomTableView : MonoBehaviour
 {
     [SerializeField] private ScrollRect studyScrollview;
-    [SerializeField] private ScrollRect seriesScrollview;
 
+    [SerializeField] private GameObject canvas;
     [SerializeField] private GameObject scrollviewContent;
     [SerializeField] private GameObject rowContent;
     [SerializeField] private GameObject seriesContent;
@@ -29,7 +29,7 @@ public class DicomTableView : MonoBehaviour
     [SerializeField] private InputField searchInputField;
     [SerializeField] private Text searchText;
 
-    private DicomImageViewer imageViewer;
+    private GameObject newVolumeContent;
 
     private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
     private const string dicomVolumeURL = "http://10.10.20.173:5080/dicom/";
@@ -43,12 +43,12 @@ public class DicomTableView : MonoBehaviour
         string studyId = dicomStudyRowContentsId[studyRowContent];
         RemoveSeriesObject();
         StartCoroutine(GetSeriesData(studyId));
-        SetStudyInVisible(studyId);
+        SetStudyVisible(false, studyId);
     }
 
     void OnClickReset()
     {
-        SetStudyVisible();
+        SetStudyVisible(true);
         RemoveSeriesObject();
     }
 
@@ -68,8 +68,9 @@ public class DicomTableView : MonoBehaviour
 
     void OnClickSeriesData()
     {
-        volumeContent.SetActive(true);
-        imageViewer = FindObjectOfType<DicomImageViewer>();
+        Destroy(newVolumeContent);
+        newVolumeContent = Instantiate(volumeContent, canvas.transform);
+        DicomImageViewer imageViewer = newVolumeContent.GetComponent<DicomImageViewer>();
         Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
         string seriesId = dicomSeriesButtonsData[seriesDataButton].Item1;
         string volumePath = dicomSeriesButtonsData[seriesDataButton].Item2;
@@ -91,36 +92,18 @@ public class DicomTableView : MonoBehaviour
         {
             Destroy(seriesRowButton.gameObject);
         }
+        Destroy(newVolumeContent);
         dicomSeriesButtonsData.Clear();
     }
 
-    void SetStudyVisible()
+    void SetStudyVisible(bool studyVisible, string studyId = "")
     {
-        // study data가 활성화되면 series 데이터와 volume image 는 비활성화되어 화면이 겹치는 것 방지
-        seriesScrollview.gameObject.SetActive(false);
-        searchContent.SetActive(true);
-        volumeContent.SetActive(false);
-        resetButton.gameObject.SetActive(false);
-
+        searchContent.SetActive(studyVisible);
         foreach (string rowStudyId in dicomStudyIdRowContents.Keys)
         {
-            dicomStudyIdRowContents[rowStudyId].SetActive(true);
+            dicomStudyIdRowContents[rowStudyId].SetActive(studyVisible);
         }
-        ResetScrollview();
-    }
-
-    void SetStudyInVisible(string studyId)
-    {
-        seriesScrollview.gameObject.SetActive(true);
-        seriesButton.gameObject.SetActive(true);
-        searchContent.SetActive(false);
-        resetButton.gameObject.SetActive(true);
-
-        foreach (string rowStudyId in dicomStudyIdRowContents.Keys)
-        {
-            dicomStudyIdRowContents[rowStudyId].SetActive(false);
-        }
-        dicomStudyIdRowContents[studyId].SetActive(true);
+        if (!studyVisible) dicomStudyIdRowContents[studyId].SetActive(true);
         ResetScrollview();
     }
 
@@ -192,12 +175,10 @@ public class DicomTableView : MonoBehaviour
         else
         {
             List<DicomSeries> dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
-            seriesContent.SetActive(true);
             foreach (DicomSeries seriesData in dicomSeriesList)
             {
                 AddDicomSeriesRow(seriesData);
             }
-            seriesButton.gameObject.SetActive(false);
         }
     }
 }
