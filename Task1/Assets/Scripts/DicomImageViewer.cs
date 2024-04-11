@@ -14,7 +14,7 @@ namespace SeriesImageViewer
         [SerializeField] private RawImage volumeImage;
         [SerializeField] private Slider volumeSlider;
 
-        void SetVolumeImage(int sliceNumber, int width, int height, Dictionary<int, Color[]> slicedColors)
+        void SetVolumeImage(int sliceNumber, int width, int height, List<Color[]> slicedColors)
         {
             Texture2D volumeTexture = new(width, height);
             volumeTexture.SetPixels(slicedColors[sliceNumber]);
@@ -35,12 +35,12 @@ namespace SeriesImageViewer
             short maxValue = imageArray.Max();
             float[] normalizedArray = imageArray.Select(value => (value - minValue) / (float)(maxValue - minValue)).ToArray();
 
-            Dictionary<int, Color[]> slicedColors = new();
+            List<Color[]> slicedColors = new();
             for (int i = 0; i < slices; i++)
             {
                 float[] slicedImage = normalizedArray.Skip(width * height * i).Take(width * height).ToArray();
                 Color[] slicedImageColor = slicedImage.Select(x => new Color(x, x, x)).ToArray();
-                slicedColors[i] = slicedImageColor;
+                slicedColors.Add(slicedImageColor);
             }
 
             // slider 의 시작 지점이 항상 index 0 이 되도록 설정
