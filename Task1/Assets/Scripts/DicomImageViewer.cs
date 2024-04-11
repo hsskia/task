@@ -14,10 +14,10 @@ namespace SeriesImageViewer
         [SerializeField] private RawImage volumeImage;
         [SerializeField] private Slider volumeSlider;
 
-        void SetVolumeImage(int sliceNumber, int width, int height, List<Color[]> slicedColors)
+        void SetVolumeImage(int width, int height, Color[] slicedColor)
         {
             Texture2D volumeTexture = new(width, height);
-            volumeTexture.SetPixels(slicedColors[sliceNumber]);
+            volumeTexture.SetPixels(slicedColor);
             volumeTexture.Apply();
             volumeImage.texture = volumeTexture;
         }
@@ -35,23 +35,23 @@ namespace SeriesImageViewer
             short maxValue = imageArray.Max();
             float[] normalizedArray = imageArray.Select(value => (value - minValue) / (float)(maxValue - minValue)).ToArray();
 
-            List<Color[]> slicedColors = new();
+            Color[][] slicedColors = new Color[slices][];
             for (int i = 0; i < slices; i++)
             {
                 float[] slicedImage = normalizedArray.Skip(width * height * i).Take(width * height).ToArray();
                 Color[] slicedImageColor = slicedImage.Select(x => new Color(x, x, x)).ToArray();
-                slicedColors.Add(slicedImageColor);
+                slicedColors[i] = slicedImageColor;
             }
 
             // slider 의 시작 지점이 항상 index 0 이 되도록 설정
             volumeSlider.value = 0;
             volumeSlider.maxValue = slices - 1;
 
-            SetVolumeImage(0, width, height, slicedColors);
+            SetVolumeImage(width, height, slicedColors[0]);
 
             // slider 에 새로운 데이터를 사용하기위해 초기화
             volumeSlider.onValueChanged.RemoveAllListeners();
-            volumeSlider.onValueChanged.AddListener((value) => SetVolumeImage((int)value, width, height, slicedColors));
+            volumeSlider.onValueChanged.AddListener((value) => SetVolumeImage(width, height, slicedColors[(int)value]));
         }
 
         public IEnumerator GetVolumeData(string seriesId, string volumeFile, string volumePath, string dicomVolumeURL)
