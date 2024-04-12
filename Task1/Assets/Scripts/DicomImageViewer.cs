@@ -5,7 +5,7 @@ using Mars;
 using System.Linq;
 using UnityEngine.Networking;
 using System.IO;
-using System.Collections;
+using System.Threading.Tasks;
 
 namespace SeriesImageViewer
 {
@@ -14,64 +14,95 @@ namespace SeriesImageViewer
         [SerializeField] private RawImage volumeImage;
         [SerializeField] private Slider volumeSlider;
 
-        void SetVolumeImage(int width, int height, Color[] slicedColor)
+        private int width;
+        private int height;
+        private int slices;
+        private readonly List<Color[]> slicedColors = new();
+
+        public async void Setup(string seriesId, string url)
+        {
+            // cache 있으면 쓰고 없으면 cache 만들기
+            string file = await GetNrrdCache(seriesId, url);
+            if (file != "")
+            {
+                await LoadNrrdData(file);
+                ShowSlice();
+            }
+        }
+
+        void Start()
+        {
+            volumeSlider.onValueChanged.AddListener(delegate { ApplyVolumeImage(); });
+        }
+
+        void ApplyVolumeImage()
         {
             Texture2D volumeTexture = new(width, height);
-            volumeTexture.SetPixels(slicedColor);
+            volumeTexture.SetPixels(slicedColors[(int)volumeSlider.value]);
             volumeTexture.Apply();
             volumeImage.texture = volumeTexture;
         }
 
-        public async void ShowVolumeImage(string volumeFile)
+        public void ShowSlice()
+        {
+            // slider 의 시작 지점이 항상 index 0 이 되도록 설정
+            volumeSlider.value = 0;
+            volumeSlider.maxValue = slices - 1;
+            ApplyVolumeImage();
+        }
+
+        public async Task<string> GetNrrdCache(string seriesId, string volumeURL)
+        {
+            volumeImage.texture = null;
+            string volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
+
+            if (!File.Exists(volumeFile)) volumeFile = await DownloadNrrdFile(seriesId, volumeURL, volumeFile);
+            return volumeFile;
+        }
+
+        async Task LoadNrrdData(string volumeFile)
         {
             NrrdRaw nrrdData = await NrrdRaw.LoadAsync(volumeFile);
             NrrdHeader nrrdHeader = nrrdData.Header;
-            int width = nrrdHeader.sizes[0];
-            int height = nrrdHeader.sizes[1];
-            int slices = nrrdHeader.sizes[2];
+            width = nrrdHeader.sizes[0];
+            height = nrrdHeader.sizes[1];
+            slices = nrrdHeader.sizes[2];
 
             short[] imageArray = nrrdData.Int16Data.ToArray();
             short minValue = imageArray.Min();
             short maxValue = imageArray.Max();
             float[] normalizedArray = imageArray.Select(value => (value - minValue) / (float)(maxValue - minValue)).ToArray();
 
-            Color[][] slicedColors = new Color[slices][];
             for (int i = 0; i < slices; i++)
             {
                 float[] slicedImage = normalizedArray.Skip(width * height * i).Take(width * height).ToArray();
                 Color[] slicedImageColor = slicedImage.Select(x => new Color(x, x, x)).ToArray();
-                slicedColors[i] = slicedImageColor;
+                slicedColors.Add(slicedImageColor);
             }
-
-            // slider 의 시작 지점이 항상 index 0 이 되도록 설정
-            volumeSlider.value = 0;
-            volumeSlider.maxValue = slices - 1;
-
-            SetVolumeImage(width, height, slicedColors[0]);
-
-            // slider 에 새로운 데이터를 사용하기위해 초기화
-            volumeSlider.onValueChanged.RemoveAllListeners();
-            volumeSlider.onValueChanged.AddListener((value) => SetVolumeImage(width, height, slicedColors[(int)value]));
         }
 
-        public IEnumerator GetVolumeData(string seriesId, string volumeFile, string volumePath, string dicomVolumeURL)
+        async Task<string> DownloadNrrdFile(string seriesId, string volumeURL, string volumeFile)
         {
-            volumeImage.texture = null;
-            string volumeURLPath = dicomVolumeURL + volumePath;
+            UnityWebRequest reqVolume = UnityWebRequest.Get(volumeURL);
+            var sendRequest = reqVolume.SendWebRequest();
 
-            UnityWebRequest reqVolume = UnityWebRequest.Get(volumeURLPath);
-            yield return reqVolume.SendWebRequest();
+            while (!sendRequest.isDone)
+            {
+                await Task.Yield();
+            }
 
             if (reqVolume.result != UnityWebRequest.Result.Success)
             {
                 Debug.Log($"Dicom Series ID {seriesId} 의 Volume 파일은 존재하지 않습니다.");
                 volumeSlider.maxValue = 0;
+                volumeFile = "";
             }
+
             else
             {
                 File.WriteAllBytes(volumeFile, reqVolume.downloadHandler.data);
-                ShowVolumeImage(volumeFile);
             }
+            return volumeFile;
         }
     }
 }
