@@ -30,11 +30,6 @@ namespace SeriesImageViewer
             }
         }
 
-        void Start()
-        {
-            volumeSlider.onValueChanged.AddListener(delegate { ApplyVolumeImage(); });
-        }
-
         void ApplyVolumeImage()
         {
             Texture2D volumeTexture = new(width, height);
@@ -48,6 +43,7 @@ namespace SeriesImageViewer
             // slider 의 시작 지점이 항상 index 0 이 되도록 설정
             volumeSlider.value = 0;
             volumeSlider.maxValue = slices - 1;
+            volumeSlider.onValueChanged.AddListener(delegate { ApplyVolumeImage(); });
             ApplyVolumeImage();
         }
 

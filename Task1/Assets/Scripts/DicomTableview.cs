@@ -3,13 +3,12 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using Mars.db;
 using UnityEngine.Networking;
-using System.Collections;
 using UnityEngine.EventSystems;
 using StudyRow;
 using Newtonsoft.Json;
-using System.IO;
 using SeriesImageViewer;
 using System;
+using System.Threading.Tasks;
 
 public class DicomTableView : MonoBehaviour
 {
@@ -32,38 +31,53 @@ public class DicomTableView : MonoBehaviour
 
     private GameObject newVolumeContent;
 
-    private const string dicomURL = "http://10.10.20.173:5080/v2/Dicom/";
-    private const string dicomVolumeURL = "http://10.10.20.173:5080/dicom/";
-    private readonly Dictionary<string, GameObject> dicomStudyIdRowContents = new();
-    private readonly Dictionary<GameObject, string> dicomStudyRowContentsId = new();
+    private const string dicomURLBase = "http://10.10.20.173:5080/v2/Dicom/";
+    private const string dicomVolumeURLBase = "http://10.10.20.173:5080/dicom/";
+    private List<DicomStudy> dicomStudyList = new();
+    private List<DicomSeries> dicomSeriesList = new();
+    private readonly Dictionary<string, GameObject> dicomStudyIdObjects = new();
+    private readonly Dictionary<GameObject, string> dicomStudyObjectsId = new();
     private readonly Dictionary<Button, Tuple<string, string>> dicomSeriesButtonsData = new();
 
-    void OnClickStudyRow()
+    async void Start()
+    {
+        await LoadStudyData();
+        MakeDicomStudyTable(dicomStudyList);
+        Setup();
+    }
+
+    void Setup()
+    {
+        searchInputField.textComponent = searchText;
+        searchButton.onClick.AddListener(() => OnClickSearch());
+        resetButton.onClick.AddListener(OnClickReset);
+    }
+
+    async void OnClickStudyData()
     {
         GameObject studyRowContent = EventSystem.current.currentSelectedGameObject.transform.parent.gameObject;
-        string studyId = dicomStudyRowContentsId[studyRowContent];
-        RemoveSeriesObject();
-        StartCoroutine(GetSeriesData(studyId));
-        SetStudyVisible(false, studyId);
+        string studyId = dicomStudyObjectsId[studyRowContent];
+        RemoveSeriesObjects();
+        await LoadSeriesData(studyId);
+        MakeDicomSeriesTexts();
+        SetObjectsVisible(false, studyId);
     }
 
     void OnClickReset()
     {
-        SetStudyVisible(true);
-        RemoveSeriesObject();
+        RemoveSeriesObjects();
+        SetObjectsVisible(true);
     }
 
-
-    void OnClickSearch(List<DicomStudy> dicomStudyList)
+    void OnClickSearch()
     {
         string keyword = searchText.text;
         foreach (DicomStudy dicomData in dicomStudyList)
         {
             // patientID 나 patientName 뿐만 아니라 전체 field 를 기준으로 keyword 찾기
             string dicomStudyString = JsonConvert.SerializeObject(dicomData);
-            dicomStudyIdRowContents[dicomData.id.ToString()].SetActive(false);
-            if (dicomStudyString.Contains(keyword)) dicomStudyIdRowContents[dicomData.id.ToString()].SetActive(true);
-
+            dicomStudyIdObjects[dicomData.id.ToString()].SetActive(false);
+            if (dicomStudyString.Contains(keyword)) dicomStudyIdObjects[dicomData.id.ToString()].SetActive(true);
         }
     }
 
@@ -74,10 +88,8 @@ public class DicomTableView : MonoBehaviour
         DicomImageViewer imageViewer = newVolumeContent.GetComponent<DicomImageViewer>();
         Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
         string seriesId = dicomSeriesButtonsData[seriesDataButton].Item1;
-        string volumePath = dicomSeriesButtonsData[seriesDataButton].Item2;
-        string volumeFile = Application.persistentDataPath + "/" + seriesId + ".nrrd";
-        if (!File.Exists(volumeFile)) StartCoroutine(imageViewer.GetVolumeData(seriesId, volumeFile, volumePath, dicomVolumeURL));
-        else imageViewer.ShowVolumeImage(volumeFile);
+        string volumeURL = dicomVolumeURLBase + dicomSeriesButtonsData[seriesDataButton].Item2;
+        imageViewer.Setup(seriesId, volumeURL);
     }
 
     // 데이터의 크기만큼 화면이 출력되도록
@@ -87,7 +99,7 @@ public class DicomTableView : MonoBehaviour
         studyScrollview.gameObject.SetActive(true);
     }
 
-    void RemoveSeriesObject()
+    void RemoveSeriesObjects()
     {
         foreach (Button seriesRowButton in dicomSeriesButtonsData.Keys)
         {
@@ -97,19 +109,25 @@ public class DicomTableView : MonoBehaviour
         dicomSeriesButtonsData.Clear();
     }
 
-    void SetStudyVisible(bool studyVisible, string studyId = "")
+    void SetObjectsVisible(bool studyVisible, string studyId = "")
     {
         searchContent.SetActive(studyVisible);
         seriesScrollview.gameObject.SetActive(!studyVisible);
-        foreach (string rowStudyId in dicomStudyIdRowContents.Keys)
-        {
-            dicomStudyIdRowContents[rowStudyId].SetActive(studyVisible);
-        }
-        if (!studyVisible) dicomStudyIdRowContents[studyId].SetActive(true);
+        foreach (string rowStudyId in dicomStudyIdObjects.Keys) dicomStudyIdObjects[rowStudyId].SetActive(studyVisible);
+        if (!studyVisible) dicomStudyIdObjects[studyId].SetActive(true);
         ResetScrollview();
     }
 
-    void AddDicomSeriesRow(DicomSeries dicomSeries)
+    void AddDicomStudyRow(DicomStudy dicomStudy)
+    {
+        GameObject newStudyRow = CopyDicomStudyPrefab();
+        DicomStudyRow dicomStudyRow = newStudyRow.GetComponent<DicomStudyRow>();
+        dicomStudyIdObjects[dicomStudy.id.ToString()] = newStudyRow;
+        dicomStudyObjectsId[newStudyRow] = dicomStudy.id.ToString();
+        dicomStudyRow.SetStudyData(dicomStudy);
+    }
+
+    void AddDicomSeriesText(DicomSeries dicomSeries)
     {
         string seriesValue = "";
 
@@ -118,69 +136,72 @@ public class DicomTableView : MonoBehaviour
             object val = property.GetValue(dicomSeries);
             seriesValue += $"{property.Name}: {val} \n";
         }
-
-        Button seriesData = Instantiate(seriesButton, seriesContent.transform);
-        seriesData.onClick.AddListener(OnClickSeriesData);
-        seriesData.GetComponentInChildren<Text>().text = seriesValue;
-        dicomSeriesButtonsData[seriesData] = new Tuple<string, string>(dicomSeries.id.ToString(), dicomSeries.volumeFilePath);
+        Button newSeriesButton = CopyDicomSeriesPrefab();
+        dicomSeriesButtonsData[newSeriesButton] = new Tuple<string, string>(dicomSeries.id.ToString(), dicomSeries.volumeFilePath);
+        newSeriesButton.GetComponentInChildren<Text>().text = seriesValue;
     }
 
-    void AddDicomStudyRow(DicomStudy dicomStudy)
+    void MakeDicomStudyTable(List<DicomStudy> dicomStudyList)
+    {
+        foreach (DicomStudy studyData in dicomStudyList)
+        {
+            AddDicomStudyRow(studyData);
+        }
+        ResetScrollview();
+    }
+
+    void MakeDicomSeriesTexts()
+    {
+        foreach (DicomSeries seriesData in dicomSeriesList)
+        {
+            AddDicomSeriesText(seriesData);
+        }
+    }
+
+    GameObject CopyDicomStudyPrefab()
     {
         GameObject newStudyRow = Instantiate(rowContent, scrollviewContent.transform);
         Button[] newStudyRowButtons = newStudyRow.GetComponentsInChildren<Button>();
-        foreach (Button button in newStudyRowButtons) { button.onClick.AddListener(OnClickStudyRow); }
-
-        DicomStudyRow dicomStudyRow = newStudyRow.GetComponent<DicomStudyRow>();
-        dicomStudyIdRowContents[dicomStudy.id.ToString()] = newStudyRow;
-        dicomStudyRowContentsId[newStudyRow] = dicomStudy.id.ToString();
-        dicomStudyRow.SetStudyData(dicomStudy);
+        foreach (Button button in newStudyRowButtons) { button.onClick.AddListener(OnClickStudyData); }
+        return newStudyRow;
     }
 
-    void Start()
+    Button CopyDicomSeriesPrefab()
     {
-        StartCoroutine(GetStudyData());
-        resetButton.onClick.AddListener(OnClickReset);
+        Button newSeriesButton = Instantiate(seriesButton, seriesContent.transform);
+        newSeriesButton.onClick.AddListener(OnClickSeriesData);
+        return newSeriesButton;
     }
 
-    IEnumerator GetStudyData()
+    async Task LoadStudyData()
     {
-        UnityWebRequest reqStudy = UnityWebRequest.Get(dicomURL + "Study");
-        yield return reqStudy.SendWebRequest();
+        UnityWebRequest reqStudy = UnityWebRequest.Get(dicomURLBase + "Study");
+        var sendRequest = reqStudy.SendWebRequest();
+        while (!sendRequest.isDone)
+        {
+            await Task.Yield();
+        }
 
         if (reqStudy.result != UnityWebRequest.Result.Success)
         {
             Debug.Log(reqStudy.error);
         }
-        else
-        {
-            List<DicomStudy> dicomStudyList = JsonConvert.DeserializeObject<List<DicomStudy>>(reqStudy.downloadHandler.text);
-            searchInputField.textComponent = searchText;
-            foreach (DicomStudy studyData in dicomStudyList)
-            {
-                AddDicomStudyRow(studyData);
-            }
-            searchButton.onClick.AddListener(() => OnClickSearch(dicomStudyList));
-            ResetScrollview();
-        }
+        dicomStudyList = JsonConvert.DeserializeObject<List<DicomStudy>>(reqStudy.downloadHandler.text);
     }
 
-    IEnumerator GetSeriesData(string studyId)
+    async Task LoadSeriesData(string studyId)
     {
-        UnityWebRequest reqSeries = UnityWebRequest.Get(dicomURL + "Series?studyId=" + studyId);
-        yield return reqSeries.SendWebRequest();
+        UnityWebRequest reqSeries = UnityWebRequest.Get(dicomURLBase + "Series?studyId=" + studyId);
+        var sendRequest = reqSeries.SendWebRequest();
+        while (!sendRequest.isDone)
+        {
+            await Task.Yield();
+        }
 
         if (reqSeries.result != UnityWebRequest.Result.Success)
         {
             Debug.Log(reqSeries.error);
         }
-        else
-        {
-            List<DicomSeries> dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
-            foreach (DicomSeries seriesData in dicomSeriesList)
-            {
-                AddDicomSeriesRow(seriesData);
-            }
-        }
+        dicomSeriesList = JsonConvert.DeserializeObject<List<DicomSeries>>(reqSeries.downloadHandler.text);
     }
 }
