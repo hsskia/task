@@ -83,13 +83,19 @@ public class DicomTableView : MonoBehaviour
 
     void OnClickSeriesData()
     {
+        Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
+        string seriesId = dicomSeriesButtonsData[seriesDataButton].Item1;
+        string volumeFilePath = dicomSeriesButtonsData[seriesDataButton].Item2;
+        if (string.IsNullOrEmpty(volumeFilePath))
+        {
+            Debug.Log($"Dicom Series ID {seriesId} 의 Volume 파일은 존재하지 않습니다.");
+            return;
+        }
+        string volumeURL = dicomVolumeURLBase + volumeFilePath;
         Destroy(newVolumeContent);
         newVolumeContent = Instantiate(volumeContent, canvas.transform);
         DicomImageViewer imageViewer = newVolumeContent.GetComponent<DicomImageViewer>();
-        Button seriesDataButton = EventSystem.current.currentSelectedGameObject.GetComponent<Button>();
-        string seriesId = dicomSeriesButtonsData[seriesDataButton].Item1;
-        string volumeURL = dicomVolumeURLBase + dicomSeriesButtonsData[seriesDataButton].Item2;
-        imageViewer.Setup(seriesId, volumeURL);
+        imageViewer.SetupImageAndSlider(seriesId, volumeURL);
     }
 
     // 데이터의 크기만큼 화면이 출력되도록
