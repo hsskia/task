@@ -20,7 +20,7 @@ public class DicomTableView : MonoBehaviour
     [SerializeField] private GameObject rowContent;
     [SerializeField] private GameObject seriesContent;
     [SerializeField] private GameObject searchContent;
-    [SerializeField] private GameObject volumeContent;
+    [SerializeField] private GameObject volumePopup;
 
     [SerializeField] private Button seriesButton;
     [SerializeField] private Button searchButton;
@@ -29,7 +29,7 @@ public class DicomTableView : MonoBehaviour
     [SerializeField] private InputField searchInputField;
     [SerializeField] private Text searchText;
 
-    private GameObject newVolumeContent;
+    private GameObject newVolumePopup;
 
     private const string dicomURLBase = "http://10.10.20.173:5080/v2/Dicom/";
     private const string dicomVolumeURLBase = "http://10.10.20.173:5080/dicom/";
@@ -92,9 +92,9 @@ public class DicomTableView : MonoBehaviour
             return;
         }
         string volumeURL = dicomVolumeURLBase + volumeFilePath;
-        Destroy(newVolumeContent);
-        newVolumeContent = Instantiate(volumeContent, canvas.transform);
-        DicomImageViewer imageViewer = newVolumeContent.GetComponent<DicomImageViewer>();
+        Destroy(newVolumePopup);
+        newVolumePopup = Instantiate(volumePopup, canvas.transform);
+        DicomImageViewer imageViewer = newVolumePopup.GetComponent<DicomImageViewer>();
         imageViewer.SetupImageAndSlider(seriesId, volumeURL);
     }
 
@@ -111,7 +111,7 @@ public class DicomTableView : MonoBehaviour
         {
             Destroy(seriesRowButton.gameObject);
         }
-        Destroy(newVolumeContent);
+        Destroy(newVolumePopup);
         dicomSeriesButtonsData.Clear();
     }
 

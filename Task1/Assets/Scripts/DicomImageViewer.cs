@@ -6,39 +6,84 @@ using System.Linq;
 using UnityEngine.Networking;
 using System.IO;
 using System.Threading.Tasks;
+using System.Collections;
 
 namespace SeriesImageViewer
 {
     public class DicomImageViewer : MonoBehaviour
     {
-        [SerializeField] private RawImage volumeImage;
-        [SerializeField] private Slider volumeSlider;
+        [SerializeField] private GameObject volumePopUp;
+        [SerializeField] private Slider axialSlider;
+        [SerializeField] private Slider coronalSlider;
+        [SerializeField] private Slider sagittalSlider;
+        [SerializeField] private RawImage axialImage;
+        [SerializeField] private RawImage coronalImage;
+        [SerializeField] private RawImage sagittalImage;
+        [SerializeField] private Button exitButton;
 
         private int width;
         private int height;
         private int slices;
-        private readonly List<Color[]> slicedColors = new();
+        private readonly List<Color[]> axialColors = new();
+        private readonly List<Color[]> coronalColors = new();
+        private readonly List<Color[]> sagittalColors = new();
+
+        void OnClickVolumeExit()
+        {
+            Destroy(volumePopUp);
+        }
 
         public async void SetupImageAndSlider(string seriesId, string url)
         {
             // cache 있으면 쓰고 없으면 cache 만들기
             string file = await GetNrrdCache(seriesId, url);
             await LoadNrrdData(file);
-            volumeSlider.maxValue = slices - 1;
-            ShowSlice();
+            SliderInitialSetup();
+            ShowImages();
         }
 
-        public void ShowSlice()
+        void SliderInitialSetup()
+        {
+            axialSlider.maxValue = slices - 1;
+            coronalSlider.maxValue = slices - 1;
+            sagittalSlider.maxValue = slices - 1;
+        }
+
+        public void ShowImages()
+        {
+            ShowSlice("axial", axialImage);
+            ShowSlice("coronal", coronalImage);
+            ShowSlice("sagittal", sagittalImage);
+        }
+
+        public void ShowSlice(string plane, RawImage volumeImage)
         {
             Texture2D volumeTexture = new(width, height);
-            volumeTexture.SetPixels(slicedColors[(int)volumeSlider.value]);
+
+            switch (plane)
+            {
+                case "axial":
+                    volumeTexture.SetPixels(axialColors[(int)axialSlider.value]);
+                    break;
+
+                case "coronal":
+                    volumeTexture.SetPixels(coronalColors[(int)coronalSlider.value]);
+                    break;
+
+                case "sagittal":
+                    volumeTexture.SetPixels(sagittalColors[(int)sagittalSlider.value]);
+                    break;
+            }
             volumeTexture.Apply();
             volumeImage.texture = volumeTexture;
         }
 
         void Start()
         {
-            volumeSlider.onValueChanged.AddListener(delegate { ShowSlice(); });
+            axialSlider.onValueChanged.AddListener((value) => ShowSlice("axial", axialImage));
+            coronalSlider.onValueChanged.AddListener((value) => ShowSlice("coronal", coronalImage));
+            sagittalSlider.onValueChanged.AddListener((value) => ShowSlice("sagittal", sagittalImage));
+            exitButton.onClick.AddListener(delegate { OnClickVolumeExit(); });
         }
 
         public async Task<string> GetNrrdCache(string seriesId, string volumeURL)
@@ -65,7 +110,9 @@ namespace SeriesImageViewer
             {
                 float[] slicedImage = normalizedArray.Skip(width * height * i).Take(width * height).ToArray();
                 Color[] slicedImageColor = slicedImage.Select(x => new Color(x, x, x)).ToArray();
-                slicedColors.Add(slicedImageColor);
+                axialColors.Add(slicedImageColor);
+                coronalColors.Add(slicedImageColor);
+                sagittalColors.Add(slicedImageColor);
             }
         }
 
