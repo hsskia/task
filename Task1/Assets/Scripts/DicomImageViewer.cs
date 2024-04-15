@@ -6,7 +6,6 @@ using System.Linq;
 using UnityEngine.Networking;
 using System.IO;
 using System.Threading.Tasks;
-using System.Collections;
 
 namespace SeriesImageViewer
 {
@@ -24,9 +23,14 @@ namespace SeriesImageViewer
         private int width;
         private int height;
         private int slices;
+        float[,,] volume3DArray;
         private readonly List<Color[]> axialColors = new();
         private readonly List<Color[]> coronalColors = new();
         private readonly List<Color[]> sagittalColors = new();
+        private const string AXIAL = "axial";
+        private const string CORONAL = "coronal";
+        private const string SAGITTAL = "sagittal";
+
 
         void OnClickVolumeExit()
         {
@@ -37,52 +41,60 @@ namespace SeriesImageViewer
         {
             // cache 있으면 쓰고 없으면 cache 만들기
             string file = await GetNrrdCache(seriesId, url);
-            await LoadNrrdData(file);
+            float[] volumeArray = await LoadNrrdData(file);
+            Make3DArray(volumeArray);
+
             SliderInitialSetup();
+            MakeAllPlanesColors();
             ShowImages();
         }
 
         void SliderInitialSetup()
         {
             axialSlider.maxValue = slices - 1;
-            coronalSlider.maxValue = slices - 1;
-            sagittalSlider.maxValue = slices - 1;
+            coronalSlider.maxValue = width - 1;
+            sagittalSlider.maxValue = height - 1;
         }
 
         public void ShowImages()
         {
-            ShowSlice("axial", axialImage);
-            ShowSlice("coronal", coronalImage);
-            ShowSlice("sagittal", sagittalImage);
+            ShowSlice(AXIAL);
+            ShowSlice(CORONAL);
+            ShowSlice(SAGITTAL);
         }
 
-        public void ShowSlice(string plane, RawImage volumeImage)
+        public void ShowSlice(string plane)
         {
-            Texture2D volumeTexture = new(width, height);
-
             switch (plane)
             {
-                case "axial":
-                    volumeTexture.SetPixels(axialColors[(int)axialSlider.value]);
+                case AXIAL:
+                    Texture2D axialTexture = new(width, height);
+                    axialTexture.SetPixels(axialColors[(int)axialSlider.value]);
+                    axialTexture.Apply();
+                    axialImage.texture = axialTexture;
                     break;
 
-                case "coronal":
-                    volumeTexture.SetPixels(coronalColors[(int)coronalSlider.value]);
+                case CORONAL:
+                    Texture2D coronalTexture = new(height, slices);
+                    coronalTexture.SetPixels(coronalColors[(int)coronalSlider.value]);
+                    coronalTexture.Apply();
+                    coronalImage.texture = coronalTexture;
                     break;
 
-                case "sagittal":
-                    volumeTexture.SetPixels(sagittalColors[(int)sagittalSlider.value]);
+                case SAGITTAL:
+                    Texture2D sigittalTexture = new(width, slices);
+                    sigittalTexture.SetPixels(sagittalColors[(int)sagittalSlider.value]);
+                    sigittalTexture.Apply();
+                    sagittalImage.texture = sigittalTexture;
                     break;
             }
-            volumeTexture.Apply();
-            volumeImage.texture = volumeTexture;
         }
 
         void Start()
         {
-            axialSlider.onValueChanged.AddListener((value) => ShowSlice("axial", axialImage));
-            coronalSlider.onValueChanged.AddListener((value) => ShowSlice("coronal", coronalImage));
-            sagittalSlider.onValueChanged.AddListener((value) => ShowSlice("sagittal", sagittalImage));
+            axialSlider.onValueChanged.AddListener((value) => ShowSlice(AXIAL));
+            coronalSlider.onValueChanged.AddListener((value) => ShowSlice(CORONAL));
+            sagittalSlider.onValueChanged.AddListener((value) => ShowSlice(SAGITTAL));
             exitButton.onClick.AddListener(delegate { OnClickVolumeExit(); });
         }
 
@@ -93,7 +105,7 @@ namespace SeriesImageViewer
             return volumeFile;
         }
 
-        async Task LoadNrrdData(string volumeFile)
+        async Task<float[]> LoadNrrdData(string volumeFile)
         {
             NrrdRaw nrrdData = await NrrdRaw.LoadAsync(volumeFile);
             NrrdHeader nrrdHeader = nrrdData.Header;
@@ -105,14 +117,80 @@ namespace SeriesImageViewer
             short minValue = imageArray.Min();
             short maxValue = imageArray.Max();
             float[] normalizedArray = imageArray.Select(value => (value - minValue) / (float)(maxValue - minValue)).ToArray();
+            return normalizedArray;
+        }
 
-            for (int i = 0; i < slices; i++)
+        void Make3DArray(float[] normalizedArray)
+        {
+            int index = 0;
+            volume3DArray = new float[width, height, slices];
+            for (int z = 0; z < slices; z++)
             {
-                float[] slicedImage = normalizedArray.Skip(width * height * i).Take(width * height).ToArray();
-                Color[] slicedImageColor = slicedImage.Select(x => new Color(x, x, x)).ToArray();
-                axialColors.Add(slicedImageColor);
-                coronalColors.Add(slicedImageColor);
-                sagittalColors.Add(slicedImageColor);
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        volume3DArray[x, y, z] = normalizedArray[index++];
+                    }
+                }
+            }
+        }
+
+        void MakeAllPlanesColors()
+        {
+            MakeAxialColors();
+            MakeCoronalColors();
+            MakeSagittalColors();
+        }
+
+        void MakeAxialColors()
+        {
+            for (int z = 0; z < slices; z++)
+            {
+                Color[] axialSliceColor = new Color[width * height];
+                for (int y = 0; y < height; y++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        float pixelValue = volume3DArray[x, y, z];
+                        axialSliceColor[y * width + x] = new Color(pixelValue, pixelValue, pixelValue);
+                    }
+                }
+                axialColors.Add(axialSliceColor);
+            }
+        }
+
+        void MakeCoronalColors()
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Color[] coronalSliceColor = new Color[slices * width];
+                for (int z = 0; z < slices; z++)
+                {
+                    for (int x = 0; x < width; x++)
+                    {
+                        float pixelValue = volume3DArray[x, y, z];
+                        coronalSliceColor[z * width + x] = new Color(pixelValue, pixelValue, pixelValue);
+                    }
+                }
+                coronalColors.Add(coronalSliceColor);
+            }
+        }
+
+        void MakeSagittalColors()
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Color[] sagittalSliceColor = new Color[slices * height];
+                for (int z = 0; z < slices; z++)
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        float pixelValue = volume3DArray[x, y, z];
+                        sagittalSliceColor[z * height + y] = new Color(pixelValue, pixelValue, pixelValue);
+                    }
+                }
+                sagittalColors.Add(sagittalSliceColor);
             }
         }
 
