@@ -58,12 +58,12 @@ namespace SeriesImageViewer
 
         public void ShowImages()
         {
-            ShowSlice(AXIAL);
-            ShowSlice(CORONAL);
-            ShowSlice(SAGITTAL);
+            ApplyTexture(AXIAL);
+            ApplyTexture(CORONAL);
+            ApplyTexture(SAGITTAL);
         }
 
-        public void ShowSlice(string plane)
+        public void ApplyTexture(string plane)
         {
             switch (plane)
             {
@@ -92,9 +92,9 @@ namespace SeriesImageViewer
 
         void Start()
         {
-            axialSlider.onValueChanged.AddListener((value) => ShowSlice(AXIAL));
-            coronalSlider.onValueChanged.AddListener((value) => ShowSlice(CORONAL));
-            sagittalSlider.onValueChanged.AddListener((value) => ShowSlice(SAGITTAL));
+            axialSlider.onValueChanged.AddListener((value) => ApplyTexture(AXIAL));
+            coronalSlider.onValueChanged.AddListener((value) => ApplyTexture(CORONAL));
+            sagittalSlider.onValueChanged.AddListener((value) => ApplyTexture(SAGITTAL));
             exitButton.onClick.AddListener(delegate { OnClickVolumeExit(); });
         }
 
